@@ -2809,7 +2809,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 			$weight = 0;
 
 			foreach ( WC()->cart->get_cart() as $cart_item ) {
-				if ( $cart_item['data']->has_weight() ) {
+				if ( isset( $cart_item['data'] ) && is_a( $cart_item['data'], 'WC_Product' ) && $cart_item['data']->has_weight() ) {
 					if ( ( ! empty( $cart_item['woosb_parent_id'] ) && ( get_post_meta( $cart_item['woosb_parent_id'], 'woosb_shipping_fee', true ) !== 'each' ) ) || ( ! empty( $cart_item['woosb_ids'] ) && ( get_post_meta( $cart_item['data']->get_id(), 'woosb_shipping_fee', true ) === 'each' ) ) ) {
 						$weight += 0;
 					} else {
@@ -3349,7 +3349,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 				<?php do_action( 'woosb_before_item_price', $product ); ?>
                 <div class="woosb-price-ori">
 					<?php
-					$ori_price = (float) $product->get_price();
+					$ori_price = (float) WPCleverWoosb_Helper()->round_price( $product->get_price() );
 					$get_price = (float) WPCleverWoosb_Helper()->get_price( $product );
 
 					if ( ! $fixed_price && $discount_percentage ) {

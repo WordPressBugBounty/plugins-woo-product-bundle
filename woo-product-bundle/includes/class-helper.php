@@ -30,13 +30,13 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 			return $price;
 		}
 
-		public static function get_price( $product, $min_or_max = 'min' ) {
+		public static function get_price( $product, $min_or_max = 'min', $for_display = false ) {
 			if ( self::get_setting( 'bundled_price_from', 'sale_price' ) === 'regular_price' ) {
 				if ( $product->is_type( 'variable' ) ) {
 					if ( $min_or_max === 'max' ) {
-						$price = $product->get_variation_regular_price( 'max' );
+						$price = $product->get_variation_regular_price( 'max', $for_display );
 					} else {
-						$price = $product->get_variation_regular_price( 'min' );
+						$price = $product->get_variation_regular_price( 'min', $for_display );
 					}
 				} else {
 					$price = $product->get_regular_price();
@@ -44,9 +44,9 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 			} else {
 				if ( $product->is_type( 'variable' ) ) {
 					if ( $min_or_max === 'max' ) {
-						$price = $product->get_variation_price( 'max' );
+						$price = $product->get_variation_price( 'max', $for_display );
 					} else {
-						$price = $product->get_variation_price( 'min' );
+						$price = $product->get_variation_price( 'min', $for_display );
 					}
 				} else {
 					$price = $product->get_price();

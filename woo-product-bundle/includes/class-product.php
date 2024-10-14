@@ -266,9 +266,21 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 					$backorders = 'yes';
 
 					foreach ( $items as $item ) {
+						$_qty      = (float) $item['qty'];
+						$_optional = ! empty( $item['optional'] );
+						$_min      = ! empty( $item['min'] ) ? (float) $item['min'] : 0;
+
+						if ( $_optional ) {
+							$_qty = $_min;
+						}
+
 						$_product = wc_get_product( $item['id'] );
 
 						if ( ! $_product || $_product->is_type( 'woosb' ) || ! $_product->get_manage_stock() || ( $exclude_unpurchasable && ( ! $_product->is_purchasable() || ! WPCleverWoosb_Helper()->is_in_stock( $_product ) ) ) ) {
+							continue;
+						}
+
+						if ( WPCleverWoosb_Helper()->is_in_stock( $_product ) && WPCleverWoosb_Helper()->has_enough_stock( $_product, $_qty ) ) {
 							continue;
 						}
 

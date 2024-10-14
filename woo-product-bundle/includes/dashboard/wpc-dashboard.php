@@ -92,7 +92,7 @@ if ( ! class_exists( 'WPCleverDashboard' ) ) {
 					'timeout' => 30,
 					'request' => serialize( $args )
 				];
-				//https://codex.wordpress.org/WordPress.org_API
+				// https://codex.wordpress.org/WordPress.org_API
 				$url      = 'http://api.wordpress.org/plugins/info/1.0/';
 				$response = wp_remote_post( $url, [ 'body' => $request ] );
 
@@ -148,26 +148,62 @@ if ( ! class_exists( 'WPCleverDashboard' ) ) {
 
 			$get_suggestion = '';
 
-			if ( false === ( $suggestion = get_transient( 'wpclever_suggestion' ) ) ) {
-				$request = wp_remote_get( 'https://api.wpclever.net/suggestion.json' );
+			if ( false === ( $plugins_arr = get_transient( 'wpclever_plugins' ) ) ) {
+				$plugins_arr = [];
+				$args        = (object) [
+					'author'   => 'wpclever',
+					'per_page' => '120',
+					'page'     => '1',
+					'fields'   => [
+						'slug',
+						'name',
+						'version',
+						'downloaded',
+						'active_installs',
+						'last_updated',
+						'rating',
+						'num_ratings',
+						'short_description'
+					]
+				];
+				$request     = [
+					'action'  => 'query_plugins',
+					'timeout' => 30,
+					'request' => serialize( $args )
+				];
+				// https://codex.wordpress.org/WordPress.org_API
+				$url      = 'http://api.wordpress.org/plugins/info/1.0/';
+				$response = wp_remote_post( $url, [ 'body' => $request ] );
 
-				if ( is_wp_error( $request ) ) {
-					return false;
-				}
+				if ( ! is_wp_error( $response ) ) {
+					$plugins = unserialize( $response['body'] );
 
-				$body       = wp_remote_retrieve_body( $request );
-				$suggestion = json_decode( $body, true );
+					if ( isset( $plugins->plugins ) && ( count( $plugins->plugins ) > 0 ) ) {
+						foreach ( $plugins->plugins as $pl ) {
+							$plugins_arr[] = [
+								'slug'              => $pl->slug,
+								'name'              => $pl->name,
+								'version'           => $pl->version,
+								'downloaded'        => $pl->downloaded,
+								'active_installs'   => $pl->active_installs,
+								'last_updated'      => strtotime( $pl->last_updated ),
+								'rating'            => $pl->rating,
+								'num_ratings'       => $pl->num_ratings,
+								'short_description' => $pl->short_description,
+							];
+						}
+					}
 
-				if ( is_array( $suggestion ) && count( $suggestion ) > 0 ) {
-					set_transient( 'wpclever_suggestion', $suggestion, 24 * HOUR_IN_SECONDS );
+					set_transient( 'wpclever_plugins', $plugins_arr, 24 * HOUR_IN_SECONDS );
 				}
 			}
 
-			if ( is_array( $suggestion ) && count( $suggestion ) > 0 ) {
-				shuffle( $suggestion );
+			if ( is_array( $plugins_arr ) && ( count( $plugins_arr ) > 0 ) ) {
+				array_multisort( array_column( $plugins_arr, 'last_updated' ), SORT_DESC, $plugins_arr );
+				$plugins_arr = array_slice( $plugins_arr, 0, 5 );
 
-				foreach ( $suggestion as $sg ) {
-					$get_suggestion .= ! empty( $sg['desc'] ) ? '<div>' . $sg['desc'] . '</div>' : '';
+				foreach ( $plugins_arr as $sg ) {
+					$get_suggestion .= '<div><a href="' . esc_url( 'https://wordpress.org/plugins/' . $sg['slug'] . '/' ) . '" target="_blank">' . esc_html( $sg['name'] ) . '</a> - ' . esc_html( $sg['short_description'] ) . '</div>';
 				}
 			}
 
