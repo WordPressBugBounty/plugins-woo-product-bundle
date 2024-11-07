@@ -72,6 +72,12 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 			}
 		}
 
+		public static function set_price( $product, $price = 0 ) {
+			$product->set_regular_price( $price );
+			$product->set_sale_price( $price );
+			$product->set_price( $price );
+		}
+
 		public static function is_in_stock( $product ) {
 			if ( $product->is_type( 'variable' ) ) {
 				return $product->child_is_in_stock();

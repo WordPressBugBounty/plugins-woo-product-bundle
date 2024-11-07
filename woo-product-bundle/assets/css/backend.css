@@ -269,7 +269,6 @@
 
 .woosb_results {
     position: absolute;
-    width: 100%;
     left: 0;
     top: calc(100% - 1px);
     background-color: #fff;
@@ -283,6 +282,10 @@
     min-height: 196px;
     z-index: 9999999;
     overflow-y: auto;
+}
+
+.woosb_results .woosb-ul .woosb-li.disabled {
+    pointer-events: none;
 }
 
 .woosb_results .woosb-ul .woosb-li .woosb-li-head .move, .woosb_results .woosb-ul .woosb-li .woosb-li-head .qty, .woosb_results .woosb-ul .woosb-li .woosb-li-head .data .name:before {

@@ -293,7 +293,6 @@
 
 .woosb_results {
   position: absolute;
-  width: 100%;
   left: 0;
   top: calc(100% - 1px);
   background-color: #fff;
@@ -310,6 +309,10 @@
 
   .woosb-ul {
     .woosb-li {
+      &.disabled {
+        pointer-events: none;
+      }
+
       .woosb-li-head {
         .move, .qty, .data .name:before {
           display: none;
