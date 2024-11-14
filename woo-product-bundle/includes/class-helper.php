@@ -80,7 +80,7 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 
 		public static function is_in_stock( $product ) {
 			if ( $product->is_type( 'variable' ) ) {
-				return $product->child_is_in_stock();
+				return $product->child_is_in_stock() || $product->child_is_on_backorder();
 			} else {
 				return $product->is_in_stock();
 			}
