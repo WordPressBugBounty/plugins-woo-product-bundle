@@ -169,6 +169,10 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 						$_min      = ! empty( $item['min'] ) ? (float) $item['min'] : 0;
 
 						if ( $_product = wc_get_product( $item['id'] ) ) {
+							if ( $_product->is_type( 'woosb' ) ) {
+								continue;
+							}
+
 							if ( $_optional ) {
 								$_qty = $_min;
 							}
@@ -177,7 +181,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 								$all_out_of_stock = false;
 							}
 
-							if ( $_product->is_type( 'woosb' ) || ( $exclude_unpurchasable && ( ! $_product->is_purchasable() || ! WPCleverWoosb_Helper()->is_in_stock( $_product ) ) ) ) {
+							if ( $exclude_unpurchasable && ( ! $_product->is_purchasable() || ! WPCleverWoosb_Helper()->is_in_stock( $_product ) ) ) {
 								continue;
 							}
 
