@@ -92,7 +92,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
 			// Add to cart
 			add_filter( 'woocommerce_add_to_cart_sold_individually_found_in_cart', [ $this, 'found_in_cart' ], 10, 2 );
-			add_filter( 'woocommerce_add_to_cart_validation', [ $this, 'add_to_cart_validation' ], 10, 2 );
+			add_filter( 'woocommerce_add_to_cart_validation', [ $this, 'add_to_cart_validation' ], 10, 3 );
 			add_filter( 'woocommerce_add_cart_item_data', [ $this, 'add_cart_item_data' ], 10, 2 );
 			add_action( 'woocommerce_add_to_cart', [ $this, 'add_to_cart' ], 10, 6 );
 			add_filter( 'woocommerce_get_cart_item_from_session', [ $this, 'get_cart_item_from_session' ], 10, 2 );
@@ -1292,7 +1292,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 			return $found_in_cart;
 		}
 
-		function add_to_cart_validation( $passed, $product_id ) {
+		function add_to_cart_validation( $passed, $product_id, $qty ) {
 			if ( ! apply_filters( 'woosb_add_to_cart_validation', true ) || isset( $_REQUEST['order_again'] ) ) {
 				return $passed;
 			}
@@ -1313,7 +1313,6 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
 				if ( ( $items = $product->get_items() ) && ! empty( $items ) ) {
 					$count                 = $total = $purchasable = 0;
-					$qty                   = (float) ( $_REQUEST['quantity'] ?? 1 );
 					$min_whole             = (float) ( get_post_meta( $product_id, 'woosb_limit_whole_min', true ) ?: 1 );
 					$max_whole             = (float) ( get_post_meta( $product_id, 'woosb_limit_whole_max', true ) ?: - 1 );
 					$total_min             = (float) ( get_post_meta( $product_id, 'woosb_total_limits_min', true ) ?: 0 );
@@ -3168,7 +3167,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 							$item_class .= ' woosb-product-hidden';
 						}
 
-						if ( ! $product->is_type( 'variable' ) && ( ! $product->is_in_stock() || ! $product->has_enough_stock( $item_qty ) || ! $product->is_purchasable() ) ) {
+						if ( ( ! $product->is_type( 'variable' ) && ( ! $product->is_in_stock() || ! $product->has_enough_stock( $item_qty ) || ! $product->is_purchasable() ) ) || ( $product->is_type( 'variable' ) && ! $product->child_is_in_stock() ) ) {
 							if ( ! apply_filters( 'woosb_allow_unpurchasable_qty', false ) ) {
 								$item_qty = 0;
 							}
