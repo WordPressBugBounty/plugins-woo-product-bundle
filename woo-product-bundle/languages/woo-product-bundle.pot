@@ -2,35 +2,40 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WPC Product Bundles for WooCommerce 8.1.7\n"
+"Project-Id-Version: WPC Product Bundles for WooCommerce 8.1.8\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woo-product-bundle\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-01-06T23:27:04+00:00\n"
+"POT-Creation-Date: 2025-02-08T18:50:49+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.5.0\n"
+"X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: woo-product-bundle\n"
 
 #. Plugin Name of the plugin
+#: wpc-product-bundles.php
 msgid "WPC Product Bundles for WooCommerce"
 msgstr ""
 
 #. Plugin URI of the plugin
+#: wpc-product-bundles.php
 msgid "https://wpclever.net/"
 msgstr ""
 
 #. Description of the plugin
+#: wpc-product-bundles.php
 msgid "WPC Product Bundles is a plugin help you bundle a few products, offer them at a discount and watch the sales go up!"
 msgstr ""
 
 #. Author of the plugin
+#: wpc-product-bundles.php
 msgid "WPClever"
 msgstr ""
 
 #. Author URI of the plugin
+#: wpc-product-bundles.php
 msgid "https://wpclever.net"
 msgstr ""
 
@@ -1050,87 +1055,87 @@ msgid "From"
 msgstr ""
 
 #. translators: bundle name
-#: includes/class-woosb.php:3672
+#: includes/class-woosb.php:3679
 msgid "Bundle (%s)"
 msgstr ""
 
-#: includes/class-woosb.php:3688
+#: includes/class-woosb.php:3695
 msgid "Create a Smart bundle"
 msgstr ""
 
 #. translators: count
-#: includes/class-woosb.php:3706
+#: includes/class-woosb.php:3713
 msgid "Added %s product(s) to this bundle."
 msgstr ""
 
-#: includes/class-woosb.php:3716
+#: includes/class-woosb.php:3723
 msgid "Bundle(s) out of stock"
 msgstr ""
 
 #. translators: product name
-#: includes/class-woosb.php:3721
-#: includes/class-woosb.php:3724
+#: includes/class-woosb.php:3728
+#: includes/class-woosb.php:3731
 msgid "%s is out of stock."
 msgstr ""
 
-#: includes/class-woosb.php:3742
+#: includes/class-woosb.php:3749
 msgid "Bundle(s) low in stock"
 msgstr ""
 
 #. translators: bundle name
-#: includes/class-woosb.php:3747
+#: includes/class-woosb.php:3754
 msgid "%s is low in stock."
 msgstr ""
 
 #. translators: product name
-#: includes/class-woosb.php:3750
+#: includes/class-woosb.php:3757
 msgid "%1$s is low in stock. There are %2$d left."
 msgstr ""
 
-#: includes/class-woosb.php:3774
+#: includes/class-woosb.php:3781
 msgid "Before bundled products"
 msgstr ""
 
-#: includes/class-woosb.php:3775
+#: includes/class-woosb.php:3782
 msgid "After bundled products"
 msgstr ""
 
-#: includes/class-woosb.php:3776
+#: includes/class-woosb.php:3783
 msgid "Before bundled products table"
 msgstr ""
 
-#: includes/class-woosb.php:3777
+#: includes/class-woosb.php:3784
 msgid "After bundled products table"
 msgstr ""
 
-#: includes/class-woosb.php:3778
+#: includes/class-woosb.php:3785
 msgid "Before bundled product"
 msgstr ""
 
-#: includes/class-woosb.php:3779
+#: includes/class-woosb.php:3786
 msgid "After bundled product"
 msgstr ""
 
-#: includes/class-woosb.php:3780
+#: includes/class-woosb.php:3787
 msgid "Before bundled product name"
 msgstr ""
 
-#: includes/class-woosb.php:3781
+#: includes/class-woosb.php:3788
 msgid "After bundled product name"
 msgstr ""
 
-#: includes/class-woosb.php:3782
+#: includes/class-woosb.php:3789
 msgid "Before bundled product price"
 msgstr ""
 
-#: includes/class-woosb.php:3783
+#: includes/class-woosb.php:3790
 msgid "After bundled product price"
 msgstr ""
 
-#: includes/class-woosb.php:3784
+#: includes/class-woosb.php:3791
 msgid "Before bundles"
 msgstr ""
 
-#: includes/class-woosb.php:3785
+#: includes/class-woosb.php:3792
 msgid "After bundles"
 msgstr ""

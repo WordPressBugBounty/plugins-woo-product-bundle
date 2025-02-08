@@ -3259,7 +3259,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 									echo '<div class="woosb-quantity-input-minus">-</div>';
 								}
 
-								woocommerce_quantity_input( [
+								$qty_args = [
 									'input_value' => $item_qty,
 									'min_value'   => $item_min,
 									'max_value'   => $item_max,
@@ -3271,12 +3271,19 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 									'classes'     => apply_filters( 'woosb_qty_classes', [
 										'input-text',
 										'woosb-qty',
+										'woosb_qty',
 										'qty',
 										'text'
 									] ),
 									'input_name'  => 'woosb_qty_' . $order
 									// compatible with WPC Product Quantity
-								], $product );
+								];
+
+								if ( apply_filters( 'woosb_use_woocommerce_quantity_input', true ) ) {
+									woocommerce_quantity_input( $qty_args, $product );
+								} else {
+									echo apply_filters( 'woosb_quantity_input', '<input type="number" class="input-text woosb-qty woosb_qty qty text" value="' . esc_attr( $item_qty ) . '" min="' . esc_attr( $item_min ) . '" max="' . esc_attr( $item_max ) . '" name="' . esc_attr( 'woosb_qty_' . $order ) . '" />', $qty_args, $product );
+								}
 
 								if ( WPCleverWoosb_Helper()->get_setting( 'plus_minus', 'no' ) === 'yes' ) {
 									echo '<div class="woosb-quantity-input-plus">+</div>';
@@ -3288,7 +3295,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                 <div class="woosb-quantity woosb-quantity-disabled">
                                     <div class="quantity">
                                         <label>
-                                            <input type="number" class="input-text woosb-qty qty text" value="0" disabled/>
+                                            <input type="number" class="input-text woosb-qty woosb_qty qty text" value="0" disabled/>
                                         </label>
                                     </div>
                                 </div>
