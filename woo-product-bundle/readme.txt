@@ -3,8 +3,8 @@ Contributors: wpclever
 Donate link: https://wpclever.net
 Tags: woocommerce, wpc, bundle, bundles, kits
 Tested up to: 6.7
-Version: 8.1.8
-Stable tag: 8.1.8
+Version: 8.2.0
+Stable tag: 8.2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,9 @@ Please try other plugins from us:
 5. Almost done! click Save and see the result
 
 == Changelog ==
+
+= 8.2.0 =
+* Fixed: Compatible with WooCommerce's Cart Block
 
 = 8.1.8 =
 * Fixed: Minor CSS/JS issues
