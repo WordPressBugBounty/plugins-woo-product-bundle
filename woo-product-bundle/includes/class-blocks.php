@@ -6,7 +6,7 @@ use Automattic\WooCommerce\Blocks\Integrations\IntegrationInterface;
 /**
  * Class for integrating with WooCommerce Blocks
  */
-class WPCleverWoosb_Blocks implements IntegrationInterface {
+class WPCleverWoosb_Blocks_IntegrationInterface implements IntegrationInterface {
 	/**
 	 * The name of the integration.
 	 *
@@ -78,4 +78,81 @@ class WPCleverWoosb_Blocks implements IntegrationInterface {
 	}
 }
 
-	
+if ( ! class_exists( 'WPCleverWoosb_Blocks' ) ) {
+	class WPCleverWoosb_Blocks {
+		function __construct() {
+			add_filter( 'rest_request_after_callbacks', [ $this, 'cart_item_data' ], 10, 3 );
+			add_filter( 'woocommerce_hydration_request_after_callbacks', [ $this, 'cart_item_data' ], 10, 3 );
+			add_action(
+				'woocommerce_blocks_mini-cart_block_registration',
+				function ( $integration_registry ) {
+					$integration_registry->register( new WPCleverWoosb_Blocks_IntegrationInterface() );
+				}
+			);
+			add_action(
+				'woocommerce_blocks_cart_block_registration',
+				function ( $integration_registry ) {
+					$integration_registry->register( new WPCleverWoosb_Blocks_IntegrationInterface() );
+				}
+			);
+			add_action(
+				'woocommerce_blocks_checkout_block_registration',
+				function ( $integration_registry ) {
+					$integration_registry->register( new WPCleverWoosb_Blocks_IntegrationInterface() );
+				}
+			);
+		}
+
+		function cart_item_data( $response, $server, $request ) {
+			if ( is_wp_error( $response ) ) {
+				return $response;
+			}
+
+			if ( ! str_contains( $request->get_route(), 'wc/store' ) ) {
+				return $response;
+			}
+
+			$data = $response->get_data();
+
+			if ( empty( $data['items'] ) ) {
+				return $response;
+			}
+
+			$cart_contents    = WC()->cart->get_cart();
+			$hide_bundled     = WPCleverWoosb_Helper()->get_setting( 'hide_bundled', 'no' ) !== 'no';
+			$hide_bundle_name = WPCleverWoosb_Helper()->get_setting( 'hide_bundle_name', 'no' ) !== 'no';
+
+			foreach ( $data['items'] as &$item_data ) {
+				$cart_item_key = $item_data['key'];
+				$cart_item     = $cart_contents[ $cart_item_key ] ?? null;
+
+				if ( ! empty( $cart_item['woosb_ids'] ) ) {
+					$item_data['woosb_bundles'] = true;
+				}
+
+				if ( ! empty( $cart_item['woosb_parent_id'] ) ) {
+					$item_data['woosb_bundled']             = true;
+					$item_data['quantity_limits']->editable = false;
+
+					if ( ! $hide_bundle_name ) {
+						$item_data['name'] = get_the_title( $cart_item['woosb_parent_id'] ) . apply_filters( 'woosb_name_separator', ' &rarr; ' ) . $item_data['name'];
+					}
+
+					if ( $hide_bundled ) {
+						$item_data['woosb_hide_bundled'] = true;
+					}
+				}
+
+				if ( ! empty( $cart_item['woosb_fixed_price'] ) ) {
+					$item_data['woosb_fixed_price'] = true;
+				}
+			}
+
+			$response->set_data( $data );
+
+			return $response;
+		}
+	}
+
+	new WPCleverWoosb_Blocks();
+}
