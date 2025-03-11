@@ -88,6 +88,10 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 
 
 		public static function has_enough_stock( $product, $qty ) {
+			if ( ! is_a( $product, 'WC_Product' ) ) {
+				return false;
+			}
+
 			if ( $product->is_type( 'variable' ) ) {
 				$variations = $product->get_available_variations( 'objects' );
 
@@ -104,6 +108,10 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 		}
 
 		public static function get_stock_quantity( $product ) {
+			if ( ! is_a( $product, 'WC_Product' ) ) {
+				return null;
+			}
+
 			if ( $product->is_type( 'variable' ) ) {
 				$stock_quantity = null;
 				$variations     = $product->get_available_variations( 'objects' );
