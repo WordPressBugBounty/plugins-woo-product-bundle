@@ -1,7 +1,7 @@
 const {registerCheckoutFilters} = window.wc.blocksCheckout;
 
 const woosbCartItemClass = (defaultValue, extensions, args) => {
-    const isCartContext = args?.context === 'cart';
+    const isCartContext = args?.context === 'cart' || args?.context === 'summary';
 
     if (!isCartContext) {
         return defaultValue;

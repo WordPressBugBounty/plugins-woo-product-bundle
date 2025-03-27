@@ -2568,8 +2568,9 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 							<?php $shipping_fee = get_post_meta( $product_id, 'woosb_shipping_fee', true ); ?>
                             <label for="woosb_shipping_fee"></label><select id="woosb_shipping_fee"
                                                                             name="woosb_shipping_fee">
-                                <option value="whole" <?php selected( $shipping_fee, 'whole' ); ?>><?php esc_html_e( 'Apply to the whole bundle', 'woo-product-bundle' ); ?></option>
-                                <option value="each" <?php selected( $shipping_fee, 'each' ); ?>><?php esc_html_e( 'Apply to each bundled product', 'woo-product-bundle' ); ?></option>
+                                <option value="whole" <?php selected( $shipping_fee, 'whole' ); ?>><?php esc_html_e( 'Apply to the main bundle product', 'woo-product-bundle' ); ?></option>
+                                <option value="each" <?php selected( $shipping_fee, 'each' ); ?>><?php esc_html_e( 'Apply to each bundled sub-product', 'woo-product-bundle' ); ?></option>
+                                <option value="both" <?php selected( $shipping_fee, 'both' ); ?>><?php esc_html_e( 'Apply to both bundle & bundled sub-product', 'woo-product-bundle' ); ?></option>
                             </select>
                         </td>
                     </tr>
@@ -2915,7 +2916,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 				foreach ( $packages as $package_key => $package ) {
 					if ( ! empty( $package['contents'] ) ) {
 						foreach ( $package['contents'] as $cart_item_key => $cart_item ) {
-							if ( ! empty( $cart_item['woosb_parent_id'] ) && ( get_post_meta( $cart_item['woosb_parent_id'], 'woosb_shipping_fee', true ) !== 'each' ) ) {
+							if ( ! empty( $cart_item['woosb_parent_id'] ) && ( get_post_meta( $cart_item['woosb_parent_id'], 'woosb_shipping_fee', true ) === 'whole' ) ) {
 								unset( $packages[ $package_key ]['contents'][ $cart_item_key ] );
 							}
 
@@ -2935,7 +2936,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
 			foreach ( WC()->cart->get_cart() as $cart_item ) {
 				if ( isset( $cart_item['data'] ) && is_a( $cart_item['data'], 'WC_Product' ) && $cart_item['data']->has_weight() ) {
-					if ( ( ! empty( $cart_item['woosb_parent_id'] ) && ( get_post_meta( $cart_item['woosb_parent_id'], 'woosb_shipping_fee', true ) !== 'each' ) ) || ( ! empty( $cart_item['woosb_ids'] ) && ( get_post_meta( $cart_item['data']->get_id(), 'woosb_shipping_fee', true ) === 'each' ) ) ) {
+					if ( ( ! empty( $cart_item['woosb_parent_id'] ) && ( get_post_meta( $cart_item['woosb_parent_id'], 'woosb_shipping_fee', true ) === 'whole' ) ) || ( ! empty( $cart_item['woosb_ids'] ) && ( get_post_meta( $cart_item['data']->get_id(), 'woosb_shipping_fee', true ) === 'each' ) ) ) {
 						$weight += 0;
 					} else {
 						$weight += (float) $cart_item['data']->get_weight() * $cart_item['quantity'];
@@ -3305,7 +3306,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 							$item_class .= ' woosb-product-hidden';
 						}
 
-						if ( ( ! $product->is_type( 'variable' ) && ( ! $product->is_in_stock() || ! $product->has_enough_stock( $item_qty ) || ! $product->is_purchasable() ) ) || ( $product->is_type( 'variable' ) && ! $product->child_is_in_stock() ) ) {
+						if ( ( ! $product->is_type( 'variable' ) && ( ! $product->is_in_stock() || ! $product->has_enough_stock( $item_qty ) || ! $product->is_purchasable() ) ) || ( $product->is_type( 'variable' ) && ! $product->child_is_in_stock() && ! $product->child_is_on_backorder() ) ) {
 							if ( ! apply_filters( 'woosb_allow_unpurchasable_qty', false ) ) {
 								$item_qty = 0;
 							}

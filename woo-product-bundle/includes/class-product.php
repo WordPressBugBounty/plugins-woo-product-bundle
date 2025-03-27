@@ -446,6 +446,9 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			return $parent_individually;
 		}
 
+		public function needs_shipping() {
+			return apply_filters( 'woocommerce_product_needs_shipping', ! $this->is_virtual() && ( get_post_meta( $this->id, 'woosb_shipping_fee', true ) !== 'each' ), $this );
+		}
 
 		// extra functions
 
