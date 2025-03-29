@@ -626,7 +626,9 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 						$item['max'] = $limit_each_max;
 					}
 
-					$items[ $key ] = $item;
+					if ( ! empty( $item['id'] ) ) {
+						$items[ $key ] = $item;
+					}
 				}
 			} else {
 				// Process string format
@@ -634,8 +636,16 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 				if ( ! empty( $ids_arr ) ) {
 					foreach ( $ids_arr as $ids_item ) {
+						if ( empty( $ids_item ) ) {
+							continue;
+						}
+
 						$data = explode( '/', $ids_item );
 						$id   = rawurldecode( $data[0] ?? 0 );
+
+						if ( empty( $id ) ) {
+							continue;
+						}
 
 						// Get product ID and SKU
 						if ( ! is_numeric( $id ) ) {
