@@ -626,9 +626,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 						$item['max'] = $limit_each_max;
 					}
 
-					if ( ! empty( $item['id'] ) ) {
-						$items[ $key ] = $item;
-					}
+					$items[ $key ] = $item;
 				}
 			} else {
 				// Process string format
