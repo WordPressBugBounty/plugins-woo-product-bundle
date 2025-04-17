@@ -3002,12 +3002,22 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 										$total_min += (float) $item['price'] * (float) $item['qty'];
 										$total_qty += (float) $item['qty'];
 									}
+
+									if ( ! $discount_amount && $discount_percentage ) {
+										$total_min *= ( 100 - (float) $discount_percentage ) / 100;
+										$total_min = WPCleverWoosb_Helper()->round_price( $total_min );
+									}
 								}
 							}
 
 							// min whole
 							$min_whole = (float) ( get_post_meta( $product_id, 'woosb_limit_whole_min', true ) ?: 1 );
 							$min_price = (float) ( ! empty( $items_optional ) ? min( array_column( $items_optional, 'price' ) ) : 0 );
+
+							if ( ! $discount_amount && $discount_percentage ) {
+								$min_price *= ( 100 - (float) $discount_percentage ) / 100;
+								$min_price = WPCleverWoosb_Helper()->round_price( $min_price );
+							}
 
 							if ( $total_qty > 0 ) {
 								// has min each
@@ -3021,8 +3031,6 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 							// discount
 							if ( $discount_amount ) {
 								$total_min -= (float) $discount_amount;
-							} elseif ( $discount_percentage ) {
-								$total_min *= (float) ( 100 - $discount_percentage ) / 100;
 							}
 
 							switch ( $price_format ) {

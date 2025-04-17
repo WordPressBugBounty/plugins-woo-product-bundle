@@ -298,7 +298,9 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 			// Early return if no items or has optional items
 			if ( ! $items || $this->has_optional() ) {
-				update_post_meta( $product_id, '_stock', $parent_quantity );
+				if ( apply_filters( 'woosb_update_stock', false ) ) {
+					update_post_meta( $product_id, '_stock', $parent_quantity );
+				}
 
 				return $parent_quantity;
 			}
@@ -331,7 +333,9 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 			// If no available quantities found, update and return parent quantity
 			if ( empty( $available_qty ) ) {
-				update_post_meta( $product_id, '_stock', $parent_quantity );
+				if ( apply_filters( 'woosb_update_stock', false ) ) {
+					update_post_meta( $product_id, '_stock', $parent_quantity );
+				}
 
 				return $parent_quantity;
 			}
@@ -341,12 +345,16 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 			// Use parent quantity if it's lower and stock is managed
 			if ( $this->is_manage_stock() && $parent_quantity < $min_available ) {
-				update_post_meta( $product_id, '_stock', $parent_quantity );
+				if ( apply_filters( 'woosb_update_stock', false ) ) {
+					update_post_meta( $product_id, '_stock', $parent_quantity );
+				}
 
 				return $parent_quantity;
 			}
 
-			update_post_meta( $product_id, '_stock', $min_available );
+			if ( apply_filters( 'woosb_update_stock', false ) ) {
+				update_post_meta( $product_id, '_stock', $min_available );
+			}
 
 			return $min_available;
 		}

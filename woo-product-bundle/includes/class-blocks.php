@@ -146,6 +146,10 @@ if ( ! class_exists( 'WPCleverWoosb_Blocks' ) ) {
 				if ( ! empty( $cart_item['woosb_fixed_price'] ) ) {
 					$item_data['woosb_fixed_price'] = true;
 				}
+
+				if ( ! empty( $cart_item['woosb_price'] ) ) {
+					$item_data['woosb_price'] = $cart_item['woosb_price'];
+				}
 			}
 
 			$response->set_data( $data );

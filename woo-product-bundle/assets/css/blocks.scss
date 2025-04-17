@@ -1,7 +1,7 @@
 .wc-block-cart-items__row {
   &.woosb-bundles {
     &:not(.woosb-fixed-price) {
-      .wc-block-cart-item__prices, .wc-block-components-product-badge, .wc-block-cart-item__total-price-and-sale-badge-wrapper {
+      .wc-block-cart-item__prices, .wc-block-components-product-badge {
         display: none !important;
       }
     }
