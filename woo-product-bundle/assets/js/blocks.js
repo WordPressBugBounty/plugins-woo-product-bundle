@@ -41,7 +41,21 @@ const woosbShowRemoveItemLink = (defaultValue, extensions, args) => {
 };
 
 const woosbCartItemPrice = (defaultValue, extensions, args, validation) => {
-    const isCartContext = args?.context === 'cart';
+    const isCartContext = args?.context === 'cart' || args?.context === 'summary';
+
+    if (!isCartContext) {
+        return defaultValue;
+    }
+
+    if (args?.cartItem?.woosb_bundles && args?.cartItem?.woosb_price) {
+        return woosb_format_price(args?.cartItem?.woosb_price * args?.cartItem?.quantity).replace(/<[^>]*>?/gm, '') + '<price/>';
+    }
+
+    return '<price/>';
+};
+
+const woosbSubtotalPriceFormat = (defaultValue, extensions, args, validation) => {
+    const isCartContext = args?.context === 'cart' || args?.context === 'summary';
 
     if (!isCartContext) {
         return defaultValue;
@@ -55,7 +69,10 @@ const woosbCartItemPrice = (defaultValue, extensions, args, validation) => {
 };
 
 registerCheckoutFilters('woosb-blocks', {
-    cartItemClass: woosbCartItemClass, showRemoveItemLink: woosbShowRemoveItemLink, cartItemPrice: woosbCartItemPrice,
+    cartItemClass: woosbCartItemClass,
+    showRemoveItemLink: woosbShowRemoveItemLink,
+    cartItemPrice: woosbCartItemPrice,
+    subtotalPriceFormat: woosbSubtotalPriceFormat
 });
 
 // https://github.com/woocommerce/woocommerce-blocks/blob/trunk/docs/third-party-developers/extensibility/checkout-block/available-filters/cart-line-items.md

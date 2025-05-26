@@ -1177,33 +1177,35 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 			wp_enqueue_style( 'woosb-frontend', WOOSB_URI . 'assets/css/frontend.css', [], WOOSB_VERSION );
 			wp_enqueue_script( 'woosb-frontend', WOOSB_URI . 'assets/js/frontend.js', [ 'jquery' ], WOOSB_VERSION, true );
 			wp_localize_script( 'woosb-frontend', 'woosb_vars', apply_filters( 'woosb_vars', [
-				'wc_price_decimals'           => wc_get_price_decimals(),
-				'wc_price_format'             => get_woocommerce_price_format(),
-				'wc_price_thousand_separator' => wc_get_price_thousand_separator(),
-				'wc_price_decimal_separator'  => wc_get_price_decimal_separator(),
-				'wc_currency_symbol'          => get_woocommerce_currency_symbol(),
-				'price_decimals'              => apply_filters( 'woosb_price_decimals', wc_get_price_decimals() ),
-				'price_format'                => get_woocommerce_price_format(), // old version before 7.1.0
-				'price_thousand_separator'    => wc_get_price_thousand_separator(), // old version before 7.1.0
-				'price_decimal_separator'     => wc_get_price_decimal_separator(), // old version before 7.1.0
-				'currency_symbol'             => get_woocommerce_currency_symbol(), // old version before 7.1.0
-				'trim_zeros'                  => apply_filters( 'woosb_price_trim_zeros', apply_filters( 'woocommerce_price_trim_zeros', false ) ),
-				'change_image'                => WPCleverWoosb_Helper()->get_setting( 'change_image', 'yes' ),
-				'bundled_price'               => WPCleverWoosb_Helper()->get_setting( 'bundled_price', 'price' ),
-				'bundled_price_from'          => WPCleverWoosb_Helper()->get_setting( 'bundled_price_from', 'sale_price' ),
-				'change_price'                => WPCleverWoosb_Helper()->get_setting( 'change_price', 'yes' ),
-				'price_selector'              => WPCleverWoosb_Helper()->get_setting( 'change_price_custom', '' ),
-				'saved_text'                  => WPCleverWoosb_Helper()->localization( 'saved', esc_html__( '(saved [d])', 'woo-product-bundle' ) ),
-				'price_text'                  => WPCleverWoosb_Helper()->localization( 'total', esc_html__( 'Bundle price:', 'woo-product-bundle' ) ),
-				'selected_text'               => WPCleverWoosb_Helper()->localization( 'selected', esc_html__( 'Selected:', 'woo-product-bundle' ) ),
-				'alert_selection'             => WPCleverWoosb_Helper()->localization( 'alert_selection', esc_html__( 'Please select a purchasable variation for [name] before adding this bundle to the cart.', 'woo-product-bundle' ) ),
-				'alert_unpurchasable'         => WPCleverWoosb_Helper()->localization( 'alert_unpurchasable', esc_html__( 'Product [name] is unpurchasable. Please remove it before adding the bundle to the cart.', 'woo-product-bundle' ) ),
-				'alert_empty'                 => WPCleverWoosb_Helper()->localization( 'alert_empty', esc_html__( 'Please choose at least one product before adding this bundle to the cart.', 'woo-product-bundle' ) ),
-				'alert_min'                   => WPCleverWoosb_Helper()->localization( 'alert_min', esc_html__( 'Please choose at least a total quantity of [min] products before adding this bundle to the cart.', 'woo-product-bundle' ) ),
-				'alert_max'                   => WPCleverWoosb_Helper()->localization( 'alert_max', esc_html__( 'Sorry, you can only choose at max a total quantity of [max] products before adding this bundle to the cart.', 'woo-product-bundle' ) ),
-				'alert_total_min'             => WPCleverWoosb_Helper()->localization( 'alert_total_min', esc_html__( 'The total must meet the minimum amount of [min].', 'woo-product-bundle' ) ),
-				'alert_total_max'             => WPCleverWoosb_Helper()->localization( 'alert_total_max', esc_html__( 'The total must meet the maximum amount of [max].', 'woo-product-bundle' ) ),
-			] ) );
+					'wc_price_decimals'           => wc_get_price_decimals(),
+					'wc_price_format'             => get_woocommerce_price_format(),
+					'wc_price_thousand_separator' => wc_get_price_thousand_separator(),
+					'wc_price_decimal_separator'  => wc_get_price_decimal_separator(),
+					'wc_currency_symbol'          => get_woocommerce_currency_symbol(),
+					'price_decimals'              => apply_filters( 'woosb_price_decimals', wc_get_price_decimals() ),
+					'price_format'                => get_woocommerce_price_format(), // old version before 7.1.0
+					'price_thousand_separator'    => wc_get_price_thousand_separator(), // old version before 7.1.0
+					'price_decimal_separator'     => wc_get_price_decimal_separator(), // old version before 7.1.0
+					'currency_symbol'             => get_woocommerce_currency_symbol(), // old version before 7.1.0
+					'trim_zeros'                  => apply_filters( 'woosb_price_trim_zeros', apply_filters( 'woocommerce_price_trim_zeros', false ) ),
+					'round_price'                 => apply_filters( 'woosb_round_price', ! apply_filters( 'woosb_ignore_round_price', false ) ),
+					'change_image'                => WPCleverWoosb_Helper()->get_setting( 'change_image', 'yes' ),
+					'bundled_price'               => WPCleverWoosb_Helper()->get_setting( 'bundled_price', 'price' ),
+					'bundled_price_from'          => WPCleverWoosb_Helper()->get_setting( 'bundled_price_from', 'sale_price' ),
+					'change_price'                => WPCleverWoosb_Helper()->get_setting( 'change_price', 'yes' ),
+					'price_selector'              => WPCleverWoosb_Helper()->get_setting( 'change_price_custom', '' ),
+					'saved_text'                  => WPCleverWoosb_Helper()->localization( 'saved', esc_html__( '(saved [d])', 'woo-product-bundle' ) ),
+					'price_text'                  => WPCleverWoosb_Helper()->localization( 'total', esc_html__( 'Bundle price:', 'woo-product-bundle' ) ),
+					'selected_text'               => WPCleverWoosb_Helper()->localization( 'selected', esc_html__( 'Selected:', 'woo-product-bundle' ) ),
+					'alert_selection'             => WPCleverWoosb_Helper()->localization( 'alert_selection', esc_html__( 'Please select a purchasable variation for [name] before adding this bundle to the cart.', 'woo-product-bundle' ) ),
+					'alert_unpurchasable'         => WPCleverWoosb_Helper()->localization( 'alert_unpurchasable', esc_html__( 'Product [name] is unpurchasable. Please remove it before adding the bundle to the cart.', 'woo-product-bundle' ) ),
+					'alert_empty'                 => WPCleverWoosb_Helper()->localization( 'alert_empty', esc_html__( 'Please choose at least one product before adding this bundle to the cart.', 'woo-product-bundle' ) ),
+					'alert_min'                   => WPCleverWoosb_Helper()->localization( 'alert_min', esc_html__( 'Please choose at least a total quantity of [min] products before adding this bundle to the cart.', 'woo-product-bundle' ) ),
+					'alert_max'                   => WPCleverWoosb_Helper()->localization( 'alert_max', esc_html__( 'Sorry, you can only choose at max a total quantity of [max] products before adding this bundle to the cart.', 'woo-product-bundle' ) ),
+					'alert_total_min'             => WPCleverWoosb_Helper()->localization( 'alert_total_min', esc_html__( 'The total must meet the minimum amount of [min].', 'woo-product-bundle' ) ),
+					'alert_total_max'             => WPCleverWoosb_Helper()->localization( 'alert_total_max', esc_html__( 'The total must meet the maximum amount of [max].', 'woo-product-bundle' ) ),
+				] )
+			);
 		}
 
 		function admin_enqueue_scripts() {
@@ -1216,11 +1218,13 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 				'selectWoo',
 			], WOOSB_VERSION, true );
 			wp_localize_script( 'woosb-backend', 'woosb_vars', [
-				'nonce'                    => wp_create_nonce( 'woosb-security' ),
-				'price_decimals'           => wc_get_price_decimals(),
-				'price_thousand_separator' => wc_get_price_thousand_separator(),
-				'price_decimal_separator'  => wc_get_price_decimal_separator()
-			] );
+					'nonce'                    => wp_create_nonce( 'woosb-security' ),
+					'price_decimals'           => wc_get_price_decimals(),
+					'price_thousand_separator' => wc_get_price_thousand_separator(),
+					'price_decimal_separator'  => wc_get_price_decimal_separator(),
+					'round_price'              => apply_filters( 'woosb_round_price', ! apply_filters( 'woosb_ignore_round_price', false ) ),
+				]
+			);
 		}
 
 		function action_links( $links, $file ) {
@@ -1308,26 +1312,28 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 		}
 
 		function cart_item_name( $name, $item ) {
-			if ( ! empty( $item['woosb_parent_id'] ) && ( WPCleverWoosb_Helper()->get_setting( 'hide_bundle_name', 'no' ) === 'no' ) ) {
-				$parent_id = apply_filters( 'woosb_item_id', $item['woosb_parent_id'] );
-
-				if ( is_a( $item, 'WC_Order_Item_Product' ) ) {
-					// for woocommerce_order_item_name
-					$item_product = $item->get_product();
-				} else {
-					$item_product = $item['data'];
-				}
-
-				if ( ( str_contains( $name, '</a>' ) ) && ( WPCleverWoosb_Helper()->get_setting( 'bundled_link', 'yes' ) !== 'no' ) ) {
-					$_name = '<a href="' . esc_url( get_permalink( $parent_id ) ) . '">' . get_the_title( $parent_id ) . '</a>' . apply_filters( 'woosb_name_separator', ' &rarr; ' ) . apply_filters( 'woosb_item_product_name', $name, $item_product );
-				} else {
-					$_name = get_the_title( $parent_id ) . apply_filters( 'woosb_name_separator', ' &rarr; ' ) . esc_html( wp_strip_all_tags( apply_filters( 'woosb_item_product_name', $name, $item_product ) ) );
-				}
-
-				return apply_filters( 'woosb_cart_item_name', $_name, $name, $item );
+			if ( empty( $item['woosb_parent_id'] ) ) {
+				return $name;
 			}
 
-			return $name;
+			$show_bundle_name = WPCleverWoosb_Helper()->get_setting( 'hide_bundle_name', 'no' ) === 'no';
+			$parent_id        = apply_filters( 'woosb_item_id', $item['woosb_parent_id'] );
+
+			if ( ( str_contains( $name, '</a>' ) ) && ( WPCleverWoosb_Helper()->get_setting( 'bundled_link', 'yes' ) !== 'no' ) ) {
+				if ( $show_bundle_name ) {
+					$_name = '<a href="' . esc_url( get_permalink( $parent_id ) ) . '">' . get_the_title( $parent_id ) . '</a>' . apply_filters( 'woosb_name_separator', ' &rarr; ' ) . apply_filters( 'woosb_item_product_name', $name, $item );
+				} else {
+					$_name = apply_filters( 'woosb_item_product_name', $name, $item );
+				}
+			} else {
+				if ( $show_bundle_name ) {
+					$_name = get_the_title( $parent_id ) . apply_filters( 'woosb_name_separator', ' &rarr; ' ) . wp_strip_all_tags( apply_filters( 'woosb_item_product_name', $name, $item ) );
+				} else {
+					$_name = wp_strip_all_tags( apply_filters( 'woosb_item_product_name', $name, $item ) );
+				}
+			}
+
+			return apply_filters( 'woosb_cart_item_name', $_name, $name, $item );
 		}
 
 		function cart_item_removed( $cart_item_key, $cart ) {
@@ -2477,7 +2483,8 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                    target="_blank" class="woosb_add_txt button"
                                    onclick="return confirm('This feature only available in Premium Version!\nBuy it now? Just $29')">
 									<?php esc_html_e( '+ Add heading/paragraph', 'woo-product-bundle' ); ?>
-                                </a> <label for="woosb_bulk_actions"></label><select id="woosb_bulk_actions">
+                                </a>
+                                <label for="woosb_bulk_actions"></label><select id="woosb_bulk_actions">
                                     <option value="none"><?php esc_html_e( 'Bulk actions', 'woo-product-bundle' ); ?></option>
                                     <option value="enable_optional"><?php esc_html_e( 'Enable "Custom quantity"', 'woo-product-bundle' ); ?></option>
                                     <option value="disable_optional"><?php esc_html_e( 'Disable "Custom quantity"', 'woo-product-bundle' ); ?></option>
@@ -2672,7 +2679,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 				$product_class .= ' disabled';
 			}
 
-			if ( class_exists( 'WPCleverWoopq' ) && ( get_option( '_woopq_decimal', 'no' ) === 'yes' ) ) {
+			if ( class_exists( 'WPCleverWoopq' ) && ( WPCleverWoopq::get_setting( 'decimal', 'no' ) === 'yes' ) ) {
 				$step = '0.000001';
 			} else {
 				$step = 1;
@@ -3899,7 +3906,13 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
 				$message .= sprintf( /* translators: product name */ esc_html__( '%s is out of stock.', 'woo-product-bundle' ), html_entity_decode( esc_html( $product->get_formatted_name() ), ENT_QUOTES, get_bloginfo( 'charset' ) ) ) . ' <a href="' . get_edit_post_link( $product_id ) . '" target="_blank">#' . $product_id . '</a>';
 
-				wp_mail( apply_filters( 'woocommerce_email_recipient_no_stock', get_option( 'woocommerce_stock_email_recipient' ), $product, null ), apply_filters( 'woocommerce_email_subject_no_stock', $subject, $product, null ), apply_filters( 'woocommerce_email_content_no_stock', $message, $product ), apply_filters( 'woocommerce_email_headers', 'Content-Type: text/html; charset=UTF-8', 'no_stock', $product, null ), apply_filters( 'woocommerce_email_attachments', [], 'no_stock', $product, null ) );
+				wp_mail(
+					apply_filters( 'woocommerce_email_recipient_no_stock', get_option( 'woocommerce_stock_email_recipient' ), $product, null ),
+					apply_filters( 'woocommerce_email_subject_no_stock', $subject, $product, null ),
+					apply_filters( 'woocommerce_email_content_no_stock', $message, $product ),
+					apply_filters( 'woocommerce_email_headers', 'Content-Type: text/html; charset=UTF-8', 'no_stock', $product, null ),
+					apply_filters( 'woocommerce_email_attachments', [], 'no_stock', $product, null )
+				);
 			}
 		}
 
@@ -3919,7 +3932,13 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
 				$message .= sprintf( /* translators: product name */ esc_html__( '%1$s is low in stock. There are %2$d left.', 'woo-product-bundle' ), html_entity_decode( esc_html( $product->get_formatted_name() ), ENT_QUOTES, get_bloginfo( 'charset' ) ), html_entity_decode( esc_html( $product->get_stock_quantity() ) ) ) . ' <a href="' . get_edit_post_link( $product_id ) . '" target="_blank">#' . $product_id . '</a>';
 
-				wp_mail( apply_filters( 'woocommerce_email_recipient_low_stock', get_option( 'woocommerce_stock_email_recipient' ), $product, null ), apply_filters( 'woocommerce_email_subject_low_stock', $subject, $product, null ), apply_filters( 'woocommerce_email_content_low_stock', $message, $product ), apply_filters( 'woocommerce_email_headers', 'Content-Type: text/html; charset=UTF-8', 'low_stock', $product, null ), apply_filters( 'woocommerce_email_attachments', [], 'low_stock', $product, null ) );
+				wp_mail(
+					apply_filters( 'woocommerce_email_recipient_low_stock', get_option( 'woocommerce_stock_email_recipient' ), $product, null ),
+					apply_filters( 'woocommerce_email_subject_low_stock', $subject, $product, null ),
+					apply_filters( 'woocommerce_email_content_low_stock', $message, $product ),
+					apply_filters( 'woocommerce_email_headers', 'Content-Type: text/html; charset=UTF-8', 'low_stock', $product, null ),
+					apply_filters( 'woocommerce_email_attachments', [], 'low_stock', $product, null )
+				);
 			}
 		}
 

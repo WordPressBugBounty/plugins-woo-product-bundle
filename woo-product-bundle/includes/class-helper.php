@@ -23,11 +23,25 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 		}
 
 		public static function round_price( $price ) {
-			if ( ! apply_filters( 'woosb_ignore_round_price', false ) ) {
-				$price = round( (float) $price, (int) apply_filters( 'woosb_price_decimals', wc_get_price_decimals() ) );
+			static $decimals = null;
+
+			// Cast price to float once
+			$price         = (float) $price;
+			$rounded_price = $price;
+
+			// Cache the filter results to avoid multiple calls
+			$should_round = ! apply_filters( 'woosb_ignore_round_price', false );
+
+			if ( apply_filters( 'woosb_round_price', $should_round ) ) {
+				// Cache decimals value using static variable
+				if ( $decimals === null ) {
+					$decimals = (int) apply_filters( 'woosb_price_decimals', wc_get_price_decimals() );
+				}
+
+				$rounded_price = round( $price, $decimals );
 			}
 
-			return $price;
+			return apply_filters( 'woosb_rounded_price', $rounded_price, $price );
 		}
 
 		public static function get_price( $product, $min_or_max = 'min', $for_display = false ) {
@@ -53,7 +67,7 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 				}
 			}
 
-			return apply_filters( 'woosb_get_price', $price, $product, $min_or_max );
+			return apply_filters( 'woosb_get_price', (float) $price, $product, $min_or_max );
 		}
 
 		public static function get_price_to_display( $product, $qty = 1, $min_or_max = 'min' ) {
@@ -202,7 +216,7 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 			if ( ! empty( self::$settings ) && isset( self::$settings[ $name ] ) ) {
 				$setting = self::$settings[ $name ];
 			} else {
-				$setting = get_option( '_woosb_' . $name, $default );
+				$setting = get_option( 'woosb_' . $name, $default );
 			}
 
 			return apply_filters( 'woosb_get_setting', $setting, $name, $default );
