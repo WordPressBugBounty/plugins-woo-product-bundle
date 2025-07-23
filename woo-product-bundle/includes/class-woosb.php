@@ -3177,9 +3177,23 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 					unset( $cart->cart_contents[ $cart_item_key ]['woosb_order_again'] );
 					unset( $cart->cart_contents[ $cart_item_key ]['woosb_keys'] );
 					$cart_item['data']->build_items( $cart_item['woosb_ids'] );
-					$items = $cart_item['data']->get_items();
+					$add_items = true;
+					$items     = $cart_item['data']->get_items();
 
-					self::add_to_cart_items( $items, $cart_item_key, $cart_item['product_id'], $cart_item['quantity'] );
+					foreach ( $items as $item ) {
+						$_product = wc_get_product( $item['id'] );
+
+						if ( ! $_product || in_array( $_product->get_type(), self::$types, true ) || ! $_product->is_in_stock() || ! $_product->is_purchasable() || ! $_product->has_enough_stock( $item['qty'] * $cart_item['quantity'] ) ) {
+							$add_items = false;
+							break;
+						}
+					}
+
+					if ( $add_items ) {
+						self::add_to_cart_items( $items, $cart_item_key, $cart_item['product_id'], $cart_item['quantity'] );
+					} else {
+						unset( $cart->cart_contents[ $cart_item_key ] );
+					}
 				}
 			}
 		}

@@ -1,4 +1,4 @@
-const {registerCheckoutFilters} = window.wc.blocksCheckout;
+const woosbCheckoutFilters = window.wc.blocksCheckout.registerCheckoutFilters;
 
 const woosbCartItemClass = (defaultValue, extensions, args) => {
     const isCartContext = args?.context === 'cart' || args?.context === 'summary';
@@ -68,7 +68,7 @@ const woosbSubtotalPriceFormat = (defaultValue, extensions, args, validation) =>
     return '<price/>';
 };
 
-registerCheckoutFilters('woosb-blocks', {
+woosbCheckoutFilters('woosb-blocks', {
     cartItemClass: woosbCartItemClass,
     showRemoveItemLink: woosbShowRemoveItemLink,
     cartItemPrice: woosbCartItemPrice,
