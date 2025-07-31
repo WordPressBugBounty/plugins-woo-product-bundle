@@ -3183,7 +3183,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 					foreach ( $items as $item ) {
 						$_product = wc_get_product( $item['id'] );
 
-						if ( ! $_product || in_array( $_product->get_type(), self::$types, true ) || ! $_product->is_in_stock() || ! $_product->is_purchasable() || ! $_product->has_enough_stock( $item['qty'] * $cart_item['quantity'] ) ) {
+						if ( ! $_product || in_array( $_product->get_type(), self::$types, true ) || ! $_product->is_in_stock() || ! $_product->is_purchasable() || empty( $item['qty'] ) || ! $_product->has_enough_stock( $item['qty'] * $cart_item['quantity'] ) ) {
 							$add_items = false;
 							break;
 						}
