@@ -3685,6 +3685,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
 					if ( $use_sku && ! empty( $item['sku'] ) ) {
 						$new_id = $helper->get_product_id_from_sku( $item['sku'] );
+
 						if ( $new_id ) {
 							$item['id'] = $new_id;
 						}
@@ -3696,6 +3697,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 						}
 
 						$item['min'] = $meta_cache['min'];
+
 						if ( $meta_cache['min_default'] ) {
 							$item['min'] = (float) $item['qty'];
 						}

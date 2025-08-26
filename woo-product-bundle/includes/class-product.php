@@ -574,6 +574,16 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 			$ids_str = implode( ',', array_map(
 				function ( $key, $item ) {
+					$use_sku = apply_filters( 'woosb_use_sku', false );
+
+					if ( $use_sku && ! empty( $item['sku'] ) ) {
+						$new_id = WPCleverWoosb_Helper()->get_product_id_from_sku( $item['sku'] );
+
+						if ( $new_id ) {
+							$item['id'] = $new_id;
+						}
+					}
+
 					return ! empty( $item['id'] ) ? "{$item['id']}/{$key}/{$item['qty']}" : null;
 				},
 				array_keys( $ids ),
