@@ -3,16 +3,16 @@ Contributors: wpclever
 Donate link: https://wpclever.net
 Tags: woocommerce, wpc, bundle, bundles, kits
 Tested up to: 6.8
-Version: 8.3.3
-Stable tag: 8.3.3
+Version: 8.3.4
+Stable tag: 8.3.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-WPC Product Bundles is a plugin help you bundle a few products, offer them at a discount and watch the sales go up!
+WPC Product Bundles is a plugin that helps you bundle a few products, offer them at a discount, and watch the sales go up!
 
 == Description ==
 
-**WPC Product Bundles for WooCommerce** is built for shop owners to create amazing deals that combine several products to put for sale together. This is such a powerful plugin for boosting sales of different product types, and at the same time offering customers with some reasonable benefits. It’s a smart tool for enhancing cross-selling strategies on your online WooCommerce shop. It is also optimized for search engines, increases site ranking and ensures a higher conversion rate.
+**WPC Product Bundles for WooCommerce** is built for shop owners to create amazing deals that combine several products to put for sale together. This is such a powerful plugin for boosting sales of different product types, and at the same time offering customers with some reasonable benefits. It’s a smart tool for enhancing cross-selling strategies on your online WooCommerce shop. It is also optimized for search engines, increases site ranking, and ensures a higher conversion rate.
 
 = Live demo =
 
@@ -60,10 +60,14 @@ Please try other plugins from us:
 1. Please make sure that you installed WooCommerce
 2. Go to plugins in your dashboard and select "Add New"
 3. Search for "WPC Product Bundles", Install & Activate it
-4. Now when you create/edit a product you can choose product type is "Smart Bundle", then add products as you want
-5. Almost done! click Save and see the result
+4. Now when you create/edit a product, you can choose a product type is "Smart Bundle", then add products as you want
+5. Almost done! Click Save and see the result
 
 == Changelog ==
+
+= 8.3.4 =
+* Fixed: Prevent an infinite loop when adding a bundle to itself
+* Updated: Compatible with WP 6.8 & Woo 10.2
 
 = 8.3.3 =
 * Updated: Optimized the code

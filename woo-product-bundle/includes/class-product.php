@@ -574,7 +574,8 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 			$ids_str = implode( ',', array_map(
 				function ( $key, $item ) {
-					$use_sku = apply_filters( 'woosb_use_sku', false );
+					$use_sku    = apply_filters( 'woosb_use_sku', false );
+					$product_id = $this->id;
 
 					if ( $use_sku && ! empty( $item['sku'] ) ) {
 						$new_id = WPCleverWoosb_Helper()->get_product_id_from_sku( $item['sku'] );
@@ -584,7 +585,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 						}
 					}
 
-					return ! empty( $item['id'] ) ? "{$item['id']}/{$key}/{$item['qty']}" : null;
+					return ! empty( $item['id'] ) && ( $item['id'] != $product_id ) ? "{$item['id']}/{$key}/{$item['qty']}" : null;
 				},
 				array_keys( $ids ),
 				$ids
@@ -634,6 +635,11 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 						}
 					}
 
+					if ( ! $item['id'] || $item['id'] == $product_id ) {
+						// prevent infinity loop
+						continue;
+					}
+
 					// Set min/max values if not set (v8.0+)
 					if ( ! isset( $item['min'] ) ) {
 						if ( $optional_products ) {
@@ -643,6 +649,9 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 						$item['min'] = $limit_each_min_default ? (float) $item['qty'] : $limit_each_min;
 						$item['max'] = $limit_each_max;
 					}
+
+					$item['id']  = apply_filters( 'woosb_item_id', $item['id'] );
+					$item['sku'] = apply_filters( 'woosb_item_sku', $item['sku'] );
 
 					$items[ $key ] = $item;
 				}
@@ -674,7 +683,8 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 							$sku     = $product ? $product->get_sku() : '';
 						}
 
-						if ( ! $id ) {
+						if ( ! $id || $id == $product_id ) {
+							// prevent infinity loop
 							continue;
 						}
 
