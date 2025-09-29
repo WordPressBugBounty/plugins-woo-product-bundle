@@ -635,7 +635,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 						}
 					}
 
-					if ( ! $item['id'] || $item['id'] == $product_id ) {
+					if ( $item['id'] == $product_id ) {
 						// prevent infinity loop
 						continue;
 					}
@@ -683,7 +683,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 							$sku     = $product ? $product->get_sku() : '';
 						}
 
-						if ( ! $id || $id == $product_id ) {
+						if ( $id == $product_id ) {
 							// prevent infinity loop
 							continue;
 						}

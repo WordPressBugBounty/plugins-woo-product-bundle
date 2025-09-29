@@ -3,8 +3,8 @@ Contributors: wpclever
 Donate link: https://wpclever.net
 Tags: woocommerce, wpc, bundle, bundles, kits
 Tested up to: 6.8
-Version: 8.3.4
-Stable tag: 8.3.4
+Version: 8.3.5
+Stable tag: 8.3.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,11 +59,14 @@ Please try other plugins from us:
 
 1. Please make sure that you installed WooCommerce
 2. Go to plugins in your dashboard and select "Add New"
-3. Search for "WPC Product Bundles", Install & Activate it
-4. Now when you create/edit a product, you can choose a product type is "Smart Bundle", then add products as you want
+3. Search for "WPC Product Bundles," Install & Activate it
+4. Now when you create/edit a product, you can choose a product type is "Smart Bundle," then add products as you want
 5. Almost done! Click Save and see the result
 
 == Changelog ==
+
+= 8.3.5 =
+* Fixed: Missing heading/paragraph
 
 = 8.3.4 =
 * Fixed: Prevent an infinite loop when adding a bundle to itself
