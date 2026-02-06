@@ -389,6 +389,12 @@ body.woocommerce-no-js .woosb-wrap + form.cart {
     display: none;
 }
 
+.woosb-cart-item-edit:before {
+    content: '✎';
+    display: inline-block;
+    margin-right: 5px;
+}
+
 @media only screen and (max-width: 767px) {
     .woosb-products[class*="woosb-products-layout-grid"] .woosb-product {
         width: calc(50% - 20px);

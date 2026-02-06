@@ -12,7 +12,7 @@
     });
 
     $(document).on('woosq_loaded', function () {
-        // product bundles in quick view popup
+        // product bundles in the quick view popup
         woosb_init($('#woosq-popup .woosb-wrap'), 'woosq');
     });
 
@@ -149,7 +149,7 @@ function woosb_check_ready($wrap, context = null) {
     var total_min = parseFloat($products.attr('data-total-min'));
     var total_max = parseFloat($products.attr('data-total-max'));
 
-    if (!$products.length || (!has_variables && !has_optional)) {
+    if (!$products.length || (!has_variables && !has_optional && !woosb_vars.recalc_price)) {
         // don't need to do anything - already calculated in PHP
         return;
     }

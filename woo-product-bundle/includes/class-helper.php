@@ -106,7 +106,7 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 				return false;
 			}
 
-			if ( $product->is_type( 'variable' ) ) {
+			if ( $product->is_type( 'variable' ) && apply_filters( 'woosb_check_variations_stock', true ) ) {
 				$variations = $product->get_available_variations( 'objects' );
 
 				foreach ( $variations as $variation ) {
@@ -126,7 +126,7 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 				return null;
 			}
 
-			if ( $product->is_type( 'variable' ) ) {
+			if ( $product->is_type( 'variable' ) && apply_filters( 'woosb_check_variations_stock', true ) ) {
 				$stock_quantity = null;
 				$variations     = $product->get_available_variations( 'objects' );
 

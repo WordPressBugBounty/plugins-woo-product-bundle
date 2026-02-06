@@ -2,9 +2,9 @@
 Contributors: wpclever
 Donate link: https://wpclever.net
 Tags: woocommerce, wpc, bundle, bundles, kits
-Tested up to: 6.8
-Version: 8.3.5
-Stable tag: 8.3.5
+Tested up to: 6.9
+Version: 8.4.4
+Stable tag: 8.4.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ WPC Product Bundles is a plugin that helps you bundle a few products, offer them
 
 == Description ==
 
-**WPC Product Bundles for WooCommerce** is built for shop owners to create amazing deals that combine several products to put for sale together. This is such a powerful plugin for boosting sales of different product types, and at the same time offering customers with some reasonable benefits. It’s a smart tool for enhancing cross-selling strategies on your online WooCommerce shop. It is also optimized for search engines, increases site ranking, and ensures a higher conversion rate.
+**WPC Product Bundles for WooCommerce** is built for shop owners to create amazing deals that combine several products to put for sale together. This is such a powerful plugin for boosting sales of different product types and at the same time offering customers with some reasonable benefits. It’s a smart tool for enhancing cross-selling strategies on your online WooCommerce shop. It is also optimized for search engines, increases site ranking, and ensures a higher conversion rate.
 
 = Live demo =
 
@@ -64,6 +64,35 @@ Please try other plugins from us:
 5. Almost done! Click Save and see the result
 
 == Changelog ==
+
+= 8.4.4 =
+* Added: Edit link for bundles on the cart page
+* Updated: Optimized the code
+
+= 8.4.3 =
+* Fixed: Minor CSS/JS issues
+
+= 8.4.2 =
+* Updated: Optimized the code
+
+= 8.4.1 =
+* Updated: Compatible with WP 6.9 & Woo 10.3
+
+= 8.4.0 =
+* Fixed: Minor CSS/JS issues
+
+= 8.3.9 =
+* Updated: Optimized the code
+
+= 8.3.8 =
+* Added: Import/export settings
+* Updated: Compatible with WP 6.8 & Woo 10.3
+
+= 8.3.7 =
+* Updated: Optimized the code
+
+= 8.3.6 =
+* Fixed: Minor CSS/JS issues in the backend
 
 = 8.3.5 =
 * Fixed: Missing heading/paragraph
