@@ -4,8 +4,12 @@ defined( 'ABSPATH' ) || exit;
 if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 	class WC_Product_Woosb extends WC_Product {
 		protected $items = null;
+		protected $helper = null;
 
 		public function __construct( $product = 0 ) {
+			// Cache helper instance
+			$this->helper = WPCleverWoosb_Helper();
+
 			$this->supports[] = 'ajax_add_to_cart';
 			parent::__construct( $product );
 
@@ -40,12 +44,10 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 		}
 
 		public function add_to_cart_text() {
-			// Cache helper instance to avoid multiple method calls
-			$helper = WPCleverWoosb_Helper();
-
 			// Combine conditions and use an early return pattern
 			if ( ! $this->is_purchasable() || ! $this->is_in_stock() ) {
-				$text = $helper->localization( 'button_read',
+				$text = $this->helper->localization(
+					'button_read',
 					esc_html__( 'Read more', 'woo-product-bundle' )
 				);
 			} else {
@@ -57,7 +59,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 					? esc_html__( 'Add to cart', 'woo-product-bundle' )
 					: esc_html__( 'Select options', 'woo-product-bundle' );
 
-				$text = $helper->localization( $button_type, $default_text );
+				$text = $this->helper->localization( $button_type, $default_text );
 			}
 
 			// Chain filters to reduce variable assignments
@@ -69,9 +71,6 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 		}
 
 		public function single_add_to_cart_text() {
-			// Cache helper instance
-			$helper = WPCleverWoosb_Helper();
-
 			// Define default text as a constant or class property if used elsewhere
 			$default_text = esc_html__( 'Add to cart', 'woo-product-bundle' );
 
@@ -80,7 +79,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				'woosb_product_single_add_to_cart_text',
 				apply_filters(
 					'woocommerce_product_single_add_to_cart_text',
-					$helper->localization( 'button_single', $default_text ),
+					$this->helper->localization( 'button_single', $default_text ),
 					$this
 				),
 				$this
@@ -153,8 +152,6 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				return '';
 			}
 
-			// Cache helper instance
-			$helper     = WPCleverWoosb_Helper();
 			$sale_price = 0;
 
 			// Check items existence early
@@ -173,11 +170,11 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				}
 
 				// Calculate item price
-				$_price = (float) $helper->get_price( $_product ) * (float) $item['qty'];
+				$_price = (float) $this->helper->get_price( $_product ) * (float) $item['qty'];
 
 				// Apply discount percentage if applicable
 				if ( $discount_percentage ) {
-					$sale_price += $helper->round_price( $_price * ( 100 - $discount_percentage ) / 100 );
+					$sale_price += $this->helper->round_price( $_price * ( 100 - $discount_percentage ) / 100 );
 				} else {
 					$sale_price += $_price;
 				}
@@ -209,8 +206,10 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			$parent_manage = parent::get_manage_stock( $context );
 
 			// Early return if stock management is disabled globally or via filter
-			if ( 'yes' !== get_option( 'woocommerce_manage_stock' ) ||
-			     apply_filters( 'woosb_disable_inventory_management', false ) ) {
+			if (
+				'yes' !== get_option( 'woocommerce_manage_stock' ) ||
+				apply_filters( 'woosb_disable_inventory_management', false )
+			) {
 				return $parent_manage;
 			}
 
@@ -220,16 +219,17 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			}
 
 			$exclude_unpurchasable = $this->exclude_unpurchasable();
-			$helper                = WPCleverWoosb_Helper();
 
 			foreach ( $this->items as $item ) {
 				$product = wc_get_product( $item['id'] );
 
 				// Skip invalid products or those meeting exclusion criteria
-				if ( ! $product ||
-				     $product->is_type( 'woosb' ) ||
-				     ( $exclude_unpurchasable &&
-				       ( ! $product->is_purchasable() || ! $helper->is_in_stock( $product ) ) ) ) {
+				if (
+					! $product ||
+					$product->is_type( 'woosb' ) ||
+					( $exclude_unpurchasable &&
+					  ( ! $product->is_purchasable() || ! $this->helper->is_in_stock( $product ) ) )
+				) {
 					continue;
 				}
 
@@ -268,7 +268,6 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			$exclude_unpurchasable = $this->exclude_unpurchasable();
 			$stock_status          = 'instock';
 			$all_out_of_stock      = true;
-			$helper                = WPCleverWoosb_Helper(); // Cache helper instance
 
 			foreach ( $this->items as $item ) {
 				// Skip if the product doesn't exist
@@ -285,8 +284,8 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				}
 
 				// Cache commonly used method results
-				$is_in_stock      = $helper->is_in_stock( $_product );
-				$has_enough_stock = $helper->has_enough_stock( $_product, $_qty );
+				$is_in_stock      = $this->helper->is_in_stock( $_product );
+				$has_enough_stock = $this->helper->has_enough_stock( $_product, $_qty );
 
 				if ( $is_in_stock && $has_enough_stock ) {
 					$all_out_of_stock = false;
@@ -300,8 +299,10 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 					return 'outofstock';
 				}
 
-				if ( $_product->get_stock_status( $context ) === 'onbackorder' ||
-				     ( $_qty && ! $has_enough_stock && $_product->backorders_allowed() ) ) {
+				if (
+					$_product->get_stock_status( $context ) === 'onbackorder' ||
+					( $_qty && ! $has_enough_stock && $_product->backorders_allowed() )
+				) {
 					$stock_status = 'onbackorder';
 				}
 			}
@@ -321,8 +322,10 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			$parent_quantity = parent::get_stock_quantity( $context );
 
 			// Early return if stock management is disabled
-			if ( 'yes' !== get_option( 'woocommerce_manage_stock' ) ||
-			     apply_filters( 'woosb_disable_inventory_management', false ) ) {
+			if (
+				'yes' !== get_option( 'woocommerce_manage_stock' ) ||
+				apply_filters( 'woosb_disable_inventory_management', false )
+			) {
 				return $parent_quantity;
 			}
 
@@ -339,7 +342,6 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				return $parent_quantity;
 			}
 
-			$helper        = WPCleverWoosb_Helper();
 			$available_qty = [];
 
 			foreach ( $items as $item ) {
@@ -351,14 +353,16 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				$_product = wc_get_product( $item['id'] );
 
 				// Cache stock quantity to avoid multiple calls
-				$stock_quantity = $helper->get_stock_quantity( $_product );
+				$stock_quantity = $this->helper->get_stock_quantity( $_product );
 
 				// Skip invalid products or those not meeting criteria
-				if ( ! $_product ||
-				     $_product->is_type( 'woosb' ) ||
-				     ! $_product->get_manage_stock() ||
-				     $stock_quantity === null ||
-				     ( $exclude_unpurchasable && ( ! $_product->is_purchasable() || ! $helper->is_in_stock( $_product ) ) ) ) {
+				if (
+					! $_product ||
+					$_product->is_type( 'woosb' ) ||
+					! $_product->get_manage_stock() ||
+					$stock_quantity === null ||
+					( $exclude_unpurchasable && ( ! $_product->is_purchasable() || ! $this->helper->is_in_stock( $_product ) ) )
+				) {
 					continue;
 				}
 
@@ -408,7 +412,6 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 			$backorders            = 'yes';
 			$exclude_unpurchasable = $this->exclude_unpurchasable();
-			$helper                = WPCleverWoosb_Helper();
 
 			foreach ( $this->items as $item ) {
 				// Get product once
@@ -420,7 +423,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				}
 
 				// Skip if the product doesn't meet criteria
-				if ( ! $product->get_manage_stock() || ( $exclude_unpurchasable && ( ! $product->is_purchasable() || ! $helper->is_in_stock( $product ) ) ) ) {
+				if ( ! $product->get_manage_stock() || ( $exclude_unpurchasable && ( ! $product->is_purchasable() || ! $this->helper->is_in_stock( $product ) ) ) ) {
 					continue;
 				}
 
@@ -458,16 +461,17 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			}
 
 			$exclude_unpurchasable = $this->exclude_unpurchasable();
-			$helper                = WPCleverWoosb_Helper();
 
 			foreach ( $this->items as $item ) {
 				$product = wc_get_product( $item['id'] );
 
 				// Skip invalid products or those meeting exclusion criteria
-				if ( ! $product ||
-				     $product->is_type( 'woosb' ) ||
-				     ( $exclude_unpurchasable &&
-				       ( ! $product->is_purchasable() || ! $helper->is_in_stock( $product ) ) ) ) {
+				if (
+					! $product ||
+					$product->is_type( 'woosb' ) ||
+					( $exclude_unpurchasable &&
+					  ( ! $product->is_purchasable() || ! $this->helper->is_in_stock( $product ) ) )
+				) {
 					continue;
 				}
 
@@ -543,7 +547,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 			// Check if we need to use the default setting
 			if ( ! $exclude_unpurchasable || in_array( $exclude_unpurchasable, [ 'unset', 'default' ], true ) ) {
-				$exclude_unpurchasable = WPCleverWoosb_Helper()->get_setting( 'exclude_unpurchasable', 'no' );
+				$exclude_unpurchasable = $this->helper->get_setting( 'exclude_unpurchasable', 'no' );
 			}
 
 			return apply_filters( 'woosb_exclude_unpurchasable', $exclude_unpurchasable === 'yes', $this );
@@ -604,7 +608,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 					$product_id = $this->id;
 
 					if ( $use_sku && ! empty( $item['sku'] ) ) {
-						$new_id = WPCleverWoosb_Helper()->get_product_id_from_sku( $item['sku'] );
+						$new_id = $this->helper->get_product_id_from_sku( $item['sku'] );
 
 						if ( $new_id ) {
 							$item['id'] = $new_id;
@@ -631,7 +635,6 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				return;
 			}
 
-			$helper     = WPCleverWoosb_Helper();
 			$product_id = $this->id;
 
 			if ( is_array( $ids ) ) {
@@ -654,7 +657,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 					// Process SKU if enabled
 					if ( $use_sku && ! empty( $item['sku'] ) ) {
-						$new_id = $helper->get_product_id_from_sku( $item['sku'] );
+						$new_id = $this->helper->get_product_id_from_sku( $item['sku'] );
 
 						if ( $new_id ) {
 							$item['id'] = $new_id;
@@ -717,9 +720,9 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 						// Get key and quantity
 						$key = isset( $data[1] )
 							? ( is_numeric( $data[1] ) && ! isset( $data[2] )
-								? $helper->generate_key()
+								? $this->helper->generate_key()
 								: $data[1] )
-							: $helper->generate_key();
+							: $this->helper->generate_key();
 
 						$qty = isset( $data[1] )
 							? ( is_numeric( $data[1] ) && ! isset( $data[2] )

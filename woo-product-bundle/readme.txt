@@ -3,8 +3,8 @@ Contributors: wpclever
 Donate link: https://wpclever.net
 Tags: woocommerce, wpc, bundle, bundles, kits
 Tested up to: 6.9
-Version: 8.4.4
-Stable tag: 8.4.4
+Version: 8.4.5
+Stable tag: 8.4.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,9 @@ Please try other plugins from us:
 5. Almost done! Click Save and see the result
 
 == Changelog ==
+
+= 8.4.5 =
+* Fixed: Only show the edit link for optional bundles
 
 = 8.4.4 =
 * Added: Edit link for bundles on the cart page

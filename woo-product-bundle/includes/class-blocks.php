@@ -135,7 +135,7 @@ if ( ! class_exists( 'WPCleverWoosb_Blocks' ) ) {
 					$item_data['quantity_limits']->editable = false;
 
 					if ( ! $hide_bundle_name ) {
-						$item_data['name'] = get_the_title( $cart_item['woosb_parent_id'] ) . apply_filters( 'woosb_name_separator', ' &rarr; ' ) . ( $item_data['name'] ?? '' );
+						$item_data['name'] = get_the_title( $cart_item['woosb_parent_id'] ) . apply_filters( 'woosb_name_separator', ' &rarr; ' ) . $item_data['name'];
 					}
 
 					if ( $hide_bundled ) {

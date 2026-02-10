@@ -6,6 +6,17 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 		protected static $instance = null;
 		protected static $settings = [];
 		protected static $localization = [];
+		protected static $image_size = 'woocommerce_thumbnail';
+		protected static $types = [
+			'bundle',
+			'woosb',
+			'composite',
+			'grouped',
+			'woosg',
+			'external',
+			'variable',
+			'variation'
+		];
 
 		public static function instance() {
 			if ( is_null( self::$instance ) ) {
@@ -20,6 +31,14 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 			self::$settings = (array) get_option( 'woosb_settings', [] );
 			// localization
 			self::$localization = (array) get_option( 'woosb_localization', [] );
+		}
+
+		public static function get_image_size() {
+			return apply_filters( 'woosb_image_size', self::$image_size );
+		}
+
+		public static function get_types() {
+			return apply_filters( 'woosb_types', self::$types );
 		}
 
 		public static function round_price( $price ) {
@@ -258,6 +277,202 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 			}
 
 			return implode( ' ', $attrs_arr );
+		}
+
+		public static function get_bundled( $ids, $product = null ) {
+			if ( empty( $ids ) ) {
+				return apply_filters( 'woosb_get_bundled', [], $product );
+			}
+
+			$bundled    = [];
+			$product_id = 0;
+
+			// Use a null coalescing operator for cleaner product_id assignment
+			if ( is_a( $product, 'WC_Product' ) ) {
+				$product_id = $product->get_id();
+			} elseif ( is_numeric( $product ) ) {
+				$product_id = $product;
+			}
+
+			// Cache post meta values to reduce database calls
+			$meta_cache = [
+				'optional'    => get_post_meta( $product_id, 'woosb_optional_products', true ) === 'on',
+				'min'         => get_post_meta( $product_id, 'woosb_limit_each_min', true ),
+				'min_default' => get_post_meta( $product_id, 'woosb_limit_each_min_default', true ) === 'on',
+				'max'         => get_post_meta( $product_id, 'woosb_limit_each_max', true )
+			];
+
+			$use_sku = apply_filters( 'woosb_use_sku', false );
+
+			if ( is_array( $ids ) ) {
+				// Process array format
+				foreach ( $ids as $key => $item ) {
+					$item = array_merge( [
+						'id'    => 0,
+						'sku'   => '',
+						'qty'   => 0,
+						'attrs' => []
+					], $item );
+
+					if ( $use_sku && ! empty( $item['sku'] ) ) {
+						$new_id = self::get_product_id_from_sku( $item['sku'] );
+
+						if ( $new_id ) {
+							$item['id'] = $new_id;
+						}
+					}
+
+					if ( ! isset( $item['min'] ) ) {
+						if ( $meta_cache['optional'] ) {
+							$item['optional'] = '1';
+						}
+
+						$item['min'] = $meta_cache['min'];
+
+						if ( $meta_cache['min_default'] ) {
+							$item['min'] = (float) $item['qty'];
+						}
+
+						$item['max'] = $meta_cache['max'];
+					}
+
+					$bundled[ is_numeric( $key ) ? self::generate_key() : $key ] = $item;
+				}
+			} else {
+				// Process string format
+				$items = array_filter( explode( ',', $ids ) );
+
+				foreach ( $items as $item ) {
+					$data = explode( '/', $item );
+					$id   = rawurldecode( $data[0] ?? 0 );
+
+					// Determine key and quantity
+					if ( isset( $data[1] ) ) {
+						if ( is_numeric( $data[1] ) && ! isset( $data[2] ) ) {
+							$key = self::generate_key();
+							$qty = (float) $data[1];
+						} else {
+							$key = $data[1];
+							$qty = (float) ( $data[2] ?? 1 );
+						}
+					} else {
+						$key = self::generate_key();
+						$qty = 1;
+					}
+
+					// Handle SKU or ID
+					if ( ! is_numeric( $id ) ) {
+						$sku = $id;
+						$id  = wc_get_product_id_by_sku( ltrim( $id, 'sku-' ) );
+					} else {
+						$item_product = wc_get_product( $id );
+						$sku          = $item_product ? $item_product->get_sku() : '';
+					}
+
+					if ( $id ) {
+						$bundled[ $key ] = [
+							'id'  => $id,
+							'sku' => $sku,
+							'qty' => $qty
+						];
+					}
+				}
+			}
+
+			return apply_filters( 'woosb_get_bundled', $bundled, $product );
+		}
+
+		public static function get_bundles( $product_id, $per_page = 500, $offset = 0, $context = 'view' ) {
+			$bundles = [];
+			$sku     = get_post_meta( $product_id, '_sku', true );
+
+			// Prepare search patterns at once
+			$search_patterns = [];
+
+			// Add product ID patterns
+			$id_str            = $product_id . '/';
+			$search_patterns[] = [
+				'key'     => 'woosb_ids',
+				'value'   => '"' . $product_id . '"',
+				'compare' => 'LIKE'
+			];
+			$search_patterns[] = [
+				'key'     => 'woosb_ids',
+				'value'   => ',' . $id_str,
+				'compare' => 'LIKE'
+			];
+			$search_patterns[] = [
+				'key'     => 'woosb_ids',
+				'value'   => '^' . $id_str,
+				'compare' => 'REGEXP'
+			];
+
+			// Add SKU patterns if valid
+			if ( ! empty( $sku ) && ! is_numeric( $sku ) ) {
+				$sku_str = $sku . '/';
+			} else {
+				$sku     = 'woosb';
+				$sku_str = 'woosb/';
+			}
+
+			$search_patterns[] = [
+				'key'     => 'woosb_ids',
+				'value'   => '"' . $sku . '"',
+				'compare' => 'LIKE'
+			];
+			$search_patterns[] = [
+				'key'     => 'woosb_ids',
+				'value'   => ',' . $sku_str,
+				'compare' => 'LIKE'
+			];
+			$search_patterns[] = [
+				'key'     => 'woosb_ids',
+				'value'   => '^' . $sku_str,
+				'compare' => 'REGEXP'
+			];
+
+			// Build query args
+			$query_args = [
+				'post_type'              => 'product',
+				'post_status'            => 'publish',
+				'posts_per_page'         => $per_page,
+				'offset'                 => $offset,
+				'no_found_rows'          => true, // Skip counting total rows when pagination is not needed
+				'update_post_meta_cache' => false, // Skip loading post-meta data we don't need
+				'update_post_term_cache' => false, // Skip loading term data we don't need
+				'tax_query'              => [
+					[
+						'taxonomy' => 'product_type',
+						'field'    => 'slug',
+						'terms'    => [ 'woosb' ],
+						'operator' => 'IN',
+					]
+				],
+				'meta_query'             => array_merge(
+					[ 'relation' => 'OR' ],
+					$search_patterns
+				)
+			];
+
+			$query = new WP_Query( $query_args );
+
+			if ( $query->have_posts() ) {
+				while ( $query->have_posts() ) {
+					$query->the_post();
+					$_product = wc_get_product( get_the_ID() );
+
+					if ( ! $_product || ( ( $context !== 'edit' ) &&
+					                      ! apply_filters( 'woosb_bundles_visible', $_product->is_visible(), $_product ) ) ) {
+						continue;
+					}
+
+					$bundles[] = $_product;
+				}
+
+				wp_reset_postdata(); // Use wp_reset_postdata() instead of wp_reset_query()
+			}
+
+			return apply_filters( 'woosb_get_bundles', $bundles, $product_id );
 		}
 	}
 
