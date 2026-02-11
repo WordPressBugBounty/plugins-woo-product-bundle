@@ -136,7 +136,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             }
 
             // Admin order
-            add_action( 'woocommerce_ajax_add_order_item_meta', [ $this, 'ajax_add_order_item_meta' ], 10, 3 );
+            add_action( 'woocommerce_ajax_add_order_item_meta', [ $this, 'add_order_item_meta' ], 10, 3 );
             add_filter( 'woocommerce_hidden_order_itemmeta', [ $this, 'hidden_order_itemmeta' ] );
             add_action( 'woocommerce_before_order_itemmeta', [ $this, 'before_order_itemmeta' ], 10, 2 );
 
@@ -2223,7 +2223,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             }
         }
 
-        function ajax_add_order_item_meta( $order_item_id, $order_item, $order ) {
+        function add_order_item_meta( $order_item_id, $order_item, $order ) {
             $quantity = $order_item->get_quantity();
 
             if ( 'line_item' === $order_item->get_type() ) {
@@ -2445,10 +2445,10 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                 }
 
                 $query_args = [
+                        's'              => $keyword,
                         'is_woosb'       => true,
                         'post_type'      => 'product',
                         'post_status'    => [ 'publish', 'private' ],
-                        's'              => $keyword,
                         'posts_per_page' => $limit
                 ];
 
@@ -2482,7 +2482,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                     $query->the_post();
                     $_product = wc_get_product( get_the_ID() );
 
-                    if ( ! $_product ) {
+                    if ( ! $_product || ! current_user_can( 'read_product', $_product->get_id() ) ) {
                         continue;
                     }
 
@@ -3417,6 +3417,8 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                 $price_html = wc_price( $price ) . $product->get_price_suffix();
                             }
                         }
+
+                        $price_html = apply_filters( 'woosb_get_price_html_auto', $price_html, $price_regular, $price_sale, $price, $product );
                     }
                 }
             }

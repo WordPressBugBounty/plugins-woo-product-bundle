@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WPC Product Bundles for WooCommerce 8.4.5\n"
+"Project-Id-Version: WPC Product Bundles for WooCommerce 8.4.6\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woo-product-bundle\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-02-10T10:25:48+00:00\n"
+"POT-Creation-Date: 2026-02-11T09:14:01+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: woo-product-bundle\n"
@@ -1100,92 +1100,92 @@ msgid "From"
 msgstr ""
 
 #. translators: bundle name
-#: includes/class-woosb.php:3987
+#: includes/class-woosb.php:3989
 #, php-format
 msgid "Bundle (%s)"
 msgstr ""
 
-#: includes/class-woosb.php:4003
+#: includes/class-woosb.php:4005
 msgid "Create a Smart bundle"
 msgstr ""
 
 #. translators: count
-#: includes/class-woosb.php:4021
+#: includes/class-woosb.php:4023
 #, php-format
 msgid "Added %s product(s) to this bundle."
 msgstr ""
 
-#: includes/class-woosb.php:4031
+#: includes/class-woosb.php:4033
 msgid "Bundle(s) out of stock"
 msgstr ""
 
 #. translators: product name
-#: includes/class-woosb.php:4036
-#: includes/class-woosb.php:4039
+#: includes/class-woosb.php:4038
+#: includes/class-woosb.php:4041
 #, php-format
 msgid "%s is out of stock."
 msgstr ""
 
-#: includes/class-woosb.php:4057
+#: includes/class-woosb.php:4059
 msgid "Bundle(s) low in stock"
 msgstr ""
 
 #. translators: bundle name
-#: includes/class-woosb.php:4062
+#: includes/class-woosb.php:4064
 #, php-format
 msgid "%s is low in stock."
 msgstr ""
 
 #. translators: product name
-#: includes/class-woosb.php:4065
+#: includes/class-woosb.php:4067
 #, php-format
 msgid "%1$s is low in stock. There are %2$d left."
 msgstr ""
 
-#: includes/class-woosb.php:4089
+#: includes/class-woosb.php:4091
 msgid "Before bundled products"
 msgstr ""
 
-#: includes/class-woosb.php:4090
+#: includes/class-woosb.php:4092
 msgid "After bundled products"
 msgstr ""
 
-#: includes/class-woosb.php:4091
+#: includes/class-woosb.php:4093
 msgid "Before bundled products table"
 msgstr ""
 
-#: includes/class-woosb.php:4092
+#: includes/class-woosb.php:4094
 msgid "After bundled products table"
 msgstr ""
 
-#: includes/class-woosb.php:4093
+#: includes/class-woosb.php:4095
 msgid "Before bundled product"
 msgstr ""
 
-#: includes/class-woosb.php:4094
+#: includes/class-woosb.php:4096
 msgid "After bundled product"
 msgstr ""
 
-#: includes/class-woosb.php:4095
+#: includes/class-woosb.php:4097
 msgid "Before bundled product name"
 msgstr ""
 
-#: includes/class-woosb.php:4096
+#: includes/class-woosb.php:4098
 msgid "After bundled product name"
 msgstr ""
 
-#: includes/class-woosb.php:4097
+#: includes/class-woosb.php:4099
 msgid "Before bundled product price"
 msgstr ""
 
-#: includes/class-woosb.php:4098
+#: includes/class-woosb.php:4100
 msgid "After bundled product price"
 msgstr ""
 
-#: includes/class-woosb.php:4099
+#: includes/class-woosb.php:4101
 msgid "Before bundles"
 msgstr ""
 
-#: includes/class-woosb.php:4100
+#: includes/class-woosb.php:4102
 msgid "After bundles"
 msgstr ""
