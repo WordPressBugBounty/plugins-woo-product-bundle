@@ -3,8 +3,8 @@ Contributors: wpclever
 Donate link: https://wpclever.net
 Tags: woocommerce, wpc, bundle, bundles, kits
 Tested up to: 6.9
-Version: 8.4.6
-Stable tag: 8.4.6
+Version: 8.4.7
+Stable tag: 8.4.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,10 @@ Please try other plugins from us:
 5. Almost done! Click Save and see the result
 
 == Changelog ==
+
+= 8.4.7 =
+* Updated: Optimized the code
+* Updated: Compatible with WP 6.9 & Woo 10.5
 
 = 8.4.6 =
 * Fixed: Security vulnerability reported by hhhai

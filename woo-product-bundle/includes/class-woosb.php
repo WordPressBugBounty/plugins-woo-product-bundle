@@ -2133,6 +2133,10 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
         }
 
         function order_item_visible( $visible, $order_item ) {
+            if ( ! is_a( $order_item, 'WC_Order_Item' ) ) {
+                return $visible;
+            }
+
             if ( $parent_id = $order_item->get_meta( '_woosb_parent_id' ) ) {
                 if ( ! apply_filters( 'woosb_item_visible', true, $order_item->get_product(), $parent_id ) ) {
                     return false;
@@ -3628,7 +3632,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                             }
                         }
 
-                        $item_class = 'woosb-item-product woosb-product woosb-product-type-' . $product->get_type();
+                        $item_class = 'woosb-product woosb-product-type-' . $product->get_type();
 
                         if ( $optional ) {
                             $item_class .= ' woosb-product-optional';
