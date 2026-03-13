@@ -195,6 +195,9 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                 add_action( 'pre_get_posts', [ $this, 'search_sentence' ], 99 );
             }
 
+            // WPC Add Product to Order
+            add_action( 'wpcap_added_to_order', [ $this, 'wpcap_added_to_order' ], 99, 3 );
+
             // WPC Variations Radio Buttons
             add_filter( 'woovr_default_selector', [ $this, 'woovr_default_selector' ], 99, 4 );
 
@@ -4077,6 +4080,77 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         apply_filters( 'woocommerce_email_headers', 'Content-Type: text/html; charset=UTF-8', 'low_stock', $product, null ),
                         apply_filters( 'woocommerce_email_attachments', [], 'low_stock', $product, null )
                 );
+            }
+        }
+
+        function wpcap_added_to_order( $item_id, $order, $parsed_data ) {
+            if ( empty( $parsed_data['woosb_ids'] ) ) {
+                return;
+            }
+
+            $order_item = $order->get_item( $item_id );
+            $quantity   = $order_item->get_quantity();
+
+            if ( 'line_item' === $order_item->get_type() ) {
+                $product = $order_item->get_product();
+
+                if ( is_a( $product, 'WC_Product_Woosb' ) ) {
+                    $product_id = $product->get_id();
+                    $product->build_items( $parsed_data['woosb_ids'] );
+                    $items = $product->get_items();
+
+                    // get bundle info
+                    $fixed_price         = $product->is_fixed_price();
+                    $discount_amount     = $product->get_discount_amount();
+                    $discount_percentage = $product->get_discount_percentage();
+
+                    // add the bundle
+                    if ( ! $fixed_price ) {
+                        if ( $discount_amount ) {
+                            $product->set_price( - (float) $discount_amount );
+                        } else {
+                            $this->helper->set_price( $product, 0 );
+                        }
+                    }
+
+                    if ( $order_id = $order->add_product( $product, $quantity ) ) {
+                        $order_item = $order->get_item( $order_id );
+                        $order_item->update_meta_data( '_woosb_ids', $product->get_ids_str(), true );
+                        $order_item->save();
+
+                        foreach ( $items as $item ) {
+                            $_product = wc_get_product( $item['id'] );
+
+                            if ( ! $_product || in_array( $_product->get_type(), $this->helper::get_types(), true ) ) {
+                                continue;
+                            }
+
+                            if ( $fixed_price ) {
+                                $this->helper->set_price( $_product, 0 );
+                            } elseif ( $discount_percentage ) {
+                                $_price = (float) ( 100 - $discount_percentage ) * $this->helper->get_price( $_product ) / 100;
+                                $_price = apply_filters( 'woosb_product_price_before_set', $_price, $_product );
+                                $_product->set_price( $_price );
+                            }
+
+                            // add bundled products
+                            $_order_item_id = $order->add_product( $_product, $item['qty'] * $quantity );
+
+                            if ( ! $_order_item_id ) {
+                                continue;
+                            }
+
+                            $_order_item = $order->get_item( $_order_item_id );
+                            $_order_item->update_meta_data( '_woosb_parent_id', $product_id, true );
+                            $_order_item->save();
+                        }
+
+                        // remove the old bundle
+                        $order->remove_item( $item_id );
+                    }
+                }
+
+                $order->save();
             }
         }
 
