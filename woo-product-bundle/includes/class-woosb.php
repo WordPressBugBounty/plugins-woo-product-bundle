@@ -26,6 +26,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
             // Settings
             add_action( 'admin_init', [ $this, 'register_settings' ] );
+            add_filter( 'pre_update_option', [ $this, 'last_saved' ], 10, 2 );
             add_action( 'admin_menu', [ $this, 'admin_menu' ] );
 
             // Enqueue frontend scripts
@@ -245,6 +246,15 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                     'type'              => 'array',
                     'sanitize_callback' => [ 'WPCleverWoosb_Helper', 'sanitize_array' ],
             ] );
+        }
+
+        function last_saved( $value, $option ) {
+            if ( $option == 'woosb_settings' || $option == 'woosb_localization' ) {
+                $value['_last_saved']    = current_time( 'timestamp' );
+                $value['_last_saved_by'] = get_current_user_id();
+            }
+
+            return $value;
         }
 
         function admin_menu() {
@@ -840,7 +850,16 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                 </tr>
                                 <tr class="submit show_if_section_all">
                                     <th colspan="2">
-                                        <?php settings_fields( 'woosb_settings' ); ?>                                <?php submit_button(); ?>
+                                        <div class="wpclever_submit">
+                                            <?php
+                                            settings_fields( 'woosb_settings' );
+                                            submit_button( '', 'primary', 'submit', false );
+
+                                            if ( function_exists( 'wpc_last_saved' ) ) {
+                                                wpc_last_saved( $this->helper->get_settings() );
+                                            }
+                                            ?>
+                                        </div>
                                         <a style="display: none;" class="wpclever_export" data-key="woosb_settings"
                                            data-name="settings"
                                            href="#"><?php esc_html_e( 'import / export', 'woo-product-bundle' ); ?></a>
@@ -1118,7 +1137,16 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                 </tr>
                                 <tr class="submit">
                                     <th colspan="2">
-                                        <?php settings_fields( 'woosb_localization' ); ?>                                <?php submit_button(); ?>
+                                        <div class="wpclever_submit">
+                                            <?php
+                                            settings_fields( 'woosb_localization' );
+                                            submit_button( '', 'primary', 'submit', false );
+
+                                            if ( function_exists( 'wpc_last_saved' ) ) {
+                                                wpc_last_saved( get_option( 'woosb_localization', [] ) );
+                                            }
+                                            ?>
+                                        </div>
                                         <a style="display: none;" class="wpclever_export" data-key="woosb_localization"
                                            data-name="settings"
                                            href="#"><?php esc_html_e( 'import / export', 'woo-product-bundle' ); ?></a>
