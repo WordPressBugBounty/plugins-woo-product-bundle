@@ -1,9 +1,11 @@
 <?php
+declare( strict_types=1 );
 defined( 'ABSPATH' ) || exit;
 
 if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 	class WC_Product_Woosb extends WC_Product {
 		protected $items = null;
+		protected $bundled_products = [];
 		protected $helper = null;
 
 		public function __construct( $product = 0 ) {
@@ -13,85 +15,63 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			$this->supports[] = 'ajax_add_to_cart';
 			parent::__construct( $product );
 
+			// Preload all metadata at once
+			$this->preload_meta();
+
 			$this->build_items();
 		}
 
-		public function get_type() {
+		public function get_type(): string {
 			return 'woosb';
 		}
 
-		public function add_to_cart_url() {
-			// Cache the product ID to avoid multiple property access
-			$product_id = $this->id;
+		public function add_to_cart_url(): string {
+			$product_id = $this->get_id();
 
-			// Combine conditions into a single variable to improve readability and avoid repeated checks
 			$can_add_directly = $this->is_purchasable()
 			                    && $this->is_in_stock()
 			                    && ! $this->has_variables()
 			                    && ! $this->has_optional();
 
-			// Use ternary operator for a simpler conditional assignment
 			$url = $can_add_directly
 				? remove_query_arg( 'added-to-cart', add_query_arg( 'add-to-cart', $product_id ) )
 				: get_permalink( $product_id );
 
-			// Chain filters to reduce variable assignments
-			return apply_filters(
+			return (string) apply_filters(
 				'woosb_product_add_to_cart_url',
 				apply_filters( 'woocommerce_product_add_to_cart_url', $url, $this ),
 				$this
 			);
 		}
 
-		public function add_to_cart_text() {
-			// Combine conditions and use an early return pattern
+		public function add_to_cart_text(): string {
 			if ( ! $this->is_purchasable() || ! $this->is_in_stock() ) {
-				$text = $this->helper->localization(
-					'button_read',
-					esc_html__( 'Read more', 'woo-product-bundle' )
-				);
+				$text = $this->helper->localization( 'button_read', esc_html__( 'Read more', 'woo-product-bundle' ) );
 			} else {
-				$button_type = ( ! $this->has_variables() && ! $this->has_optional() )
-					? 'button_add'
-					: 'button_select';
-
-				$default_text = ( $button_type === 'button_add' )
-					? esc_html__( 'Add to cart', 'woo-product-bundle' )
-					: esc_html__( 'Select options', 'woo-product-bundle' );
-
-				$text = $this->helper->localization( $button_type, $default_text );
+				$button_type  = ( ! $this->has_variables() && ! $this->has_optional() ) ? 'button_add' : 'button_select';
+				$default_text = ( $button_type === 'button_add' ) ? esc_html__( 'Add to cart', 'woo-product-bundle' ) : esc_html__( 'Select options', 'woo-product-bundle' );
+				$text         = $this->helper->localization( $button_type, $default_text );
 			}
 
-			// Chain filters to reduce variable assignments
-			return apply_filters(
+			return (string) apply_filters(
 				'woosb_product_add_to_cart_text',
 				apply_filters( 'woocommerce_product_add_to_cart_text', $text, $this ),
 				$this
 			);
 		}
 
-		public function single_add_to_cart_text() {
-			// Define default text as a constant or class property if used elsewhere
+		public function single_add_to_cart_text(): string {
 			$default_text = esc_html__( 'Add to cart', 'woo-product-bundle' );
 
-			// Get localized text and apply filters in a single chain
-			return apply_filters(
+			return (string) apply_filters(
 				'woosb_product_single_add_to_cart_text',
-				apply_filters(
-					'woocommerce_product_single_add_to_cart_text',
-					$this->helper->localization( 'button_single', $default_text ),
-					$this
-				),
+				apply_filters( 'woocommerce_product_single_add_to_cart_text', $this->helper->localization( 'button_single', $default_text ), $this ),
 				$this
 			);
 		}
 
-		public function is_on_sale( $context = 'view' ) {
-			// Cache the fixed price check to avoid multiple method calls
-			$is_fixed = $this->is_fixed_price();
-
-			// Early return if a fixed price is set
-			if ( $is_fixed ) {
+		public function is_on_sale( $context = 'view' ): bool {
+			if ( $this->is_fixed_price() ) {
 				return parent::is_on_sale( $context );
 			}
 
@@ -118,8 +98,8 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 			// Process items
 			foreach ( $this->items as $item ) {
-				// Get product once
-				$_product = wc_get_product( $item['id'] );
+				// Get cached product object
+				$_product = $this->get_bundled_product_object( $item['id'] );
 
 				// Skip invalid products or woosb type
 				if ( ! $_product || $_product->is_type( 'woosb' ) ) {
@@ -161,8 +141,8 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 			// Process items
 			foreach ( $this->items as $item ) {
-				// Get product once
-				$_product = wc_get_product( $item['id'] );
+				// Get cached product object
+				$_product = $this->get_bundled_product_object( $item['id'] );
 
 				// Skip invalid products or woosb type
 				if ( ! $_product || $_product->is_type( 'woosb' ) ) {
@@ -221,7 +201,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			$exclude_unpurchasable = $this->exclude_unpurchasable();
 
 			foreach ( $this->items as $item ) {
-				$product = wc_get_product( $item['id'] );
+				$product = $this->get_bundled_product_object( $item['id'] );
 
 				// Skip invalid products or those meeting exclusion criteria
 				if (
@@ -240,7 +220,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 				// Check the parent product if this is a variation
 				if ( $product->is_type( 'variation' ) ) {
-					$parent_product = wc_get_product( $product->get_parent_id() );
+					$parent_product = $this->get_bundled_product_object( $product->get_parent_id() );
 
 					if ( $parent_product && $parent_product->get_manage_stock( $context ) === true ) {
 						return true;
@@ -271,7 +251,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 			foreach ( $this->items as $item ) {
 				// Skip if the product doesn't exist
-				$_product = wc_get_product( $item['id'] );
+				$_product = $this->get_bundled_product_object( $item['id'] );
 
 				if ( ! $_product || $_product->is_type( 'woosb' ) ) {
 					continue;
@@ -350,7 +330,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 					continue;
 				}
 
-				$_product = wc_get_product( $item['id'] );
+				$_product = $this->get_bundled_product_object( $item['id'] );
 
 				// Cache stock quantity to avoid multiple calls
 				$stock_quantity = $this->helper->get_stock_quantity( $_product );
@@ -415,7 +395,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 			foreach ( $this->items as $item ) {
 				// Get product once
-				$product = wc_get_product( $item['id'] ?: 0 );
+				$product = $this->get_bundled_product_object( $item['id'] ?: 0 );
 
 				// Skip if the product doesn't meet criteria
 				if ( ! $product || ! is_a( $product, 'WC_Product' ) || $product->is_type( 'woosb' ) ) {
@@ -485,7 +465,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 		}
 
 		public function needs_shipping() {
-			return apply_filters( 'woocommerce_product_needs_shipping', ! $this->is_virtual() && ( get_post_meta( $this->id, 'woosb_shipping_fee', true ) !== 'each' ), $this );
+			return apply_filters( 'woocommerce_product_needs_shipping', ! $this->is_virtual() && ( $this->get_meta( 'woosb_shipping_fee' ) !== 'each' ), $this );
 		}
 
 		// extra functions
@@ -502,7 +482,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 					return true;
 				} // Skip if we already found a variable product
 
-				if ( $product = wc_get_product( $item['id'] ) ) {
+				if ( $product = $this->get_bundled_product_object( (int) $item['id'] ) ) {
 					return $product->is_type( 'variable' ) ? true : $carry;
 				}
 
@@ -532,18 +512,18 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 		}
 
 		public function is_manage_stock() {
-			return apply_filters( 'woosb_is_manage_stock', get_post_meta( $this->id, 'woosb_manage_stock', true ) === 'on', $this );
+			return apply_filters( 'woosb_is_manage_stock', $this->get_meta( 'woosb_manage_stock' ) === 'on', $this );
 		}
 
 		public function is_fixed_price() {
-			$disable_auto_price = get_post_meta( $this->id, 'woosb_disable_auto_price', true ) ?: apply_filters( 'woosb_disable_auto_price_default', 'off' );
+			$disable_auto_price = $this->get_meta( 'woosb_disable_auto_price' ) ?: apply_filters( 'woosb_disable_auto_price_default', 'off' );
 
 			return apply_filters( 'woosb_is_fixed_price', $disable_auto_price === 'on', $this );
 		}
 
 		public function exclude_unpurchasable() {
 			// Get meta-value once
-			$exclude_unpurchasable = get_post_meta( $this->id, 'woosb_exclude_unpurchasable', true );
+			$exclude_unpurchasable = $this->get_meta( 'woosb_exclude_unpurchasable' );
 
 			// Check if we need to use the default setting
 			if ( ! $exclude_unpurchasable || in_array( $exclude_unpurchasable, [ 'unset', 'default' ], true ) ) {
@@ -560,7 +540,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			}
 
 			// Get and cast discount amount in one step
-			$discount_amount = (float) get_post_meta( $this->id, 'woosb_discount_amount', true );
+			$discount_amount = (float) $this->get_meta( 'woosb_discount_amount' );
 
 			return apply_filters( 'woosb_get_discount_amount', $discount_amount, $this );
 		}
@@ -572,7 +552,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			}
 
 			// Get discount percentage
-			$discount_percentage = get_post_meta( $this->id, 'woosb_discount', true );
+			$discount_percentage = $this->get_meta( 'woosb_discount' );
 
 			// Validate discount percentage
 			if ( is_numeric( $discount_percentage ) ) {
@@ -592,7 +572,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 		}
 
 		public function get_ids() {
-			return apply_filters( 'woosb_get_ids', get_post_meta( $this->id, 'woosb_ids', true ), $this );
+			return apply_filters( 'woosb_get_ids', $this->get_meta( 'woosb_ids' ), $this );
 		}
 
 		public function get_ids_str() {
@@ -626,7 +606,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 		public function build_items( $ids = null ) {
 			$items = [];
-			$ids   = $ids ?: $this->get_ids();
+			$ids   = $ids ?: $this->get_meta( 'woosb_ids' );
 
 			// Early return if no IDs
 			if ( empty( $ids ) ) {
@@ -640,10 +620,10 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			if ( is_array( $ids ) ) {
 				// Process array format (v7.0+)
 				// Cache meta values for better performance
-				$optional_products      = get_post_meta( $product_id, 'woosb_optional_products', true ) === 'on';
-				$limit_each_min         = get_post_meta( $product_id, 'woosb_limit_each_min', true );
-				$limit_each_min_default = get_post_meta( $product_id, 'woosb_limit_each_min_default', true ) === 'on';
-				$limit_each_max         = get_post_meta( $product_id, 'woosb_limit_each_max', true );
+				$optional_products      = $this->get_meta( 'woosb_optional_products' ) === 'on';
+				$limit_each_min         = $this->get_meta( 'woosb_limit_each_min' );
+				$limit_each_min_default = $this->get_meta( 'woosb_limit_each_min_default' ) === 'on';
+				$limit_each_max         = $this->get_meta( 'woosb_limit_each_max' );
 				$use_sku                = apply_filters( 'woosb_use_sku', false );
 
 				foreach ( $ids as $key => $item ) {
@@ -708,7 +688,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 							$id  = wc_get_product_id_by_sku( ltrim( $id, 'sku-' ) );
 						} else {
 							// Process ID
-							$product = wc_get_product( $id );
+							$product = $this->get_bundled_product_object( (int) $id );
 							$sku     = $product ? $product->get_sku() : '';
 						}
 
@@ -746,8 +726,28 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			$this->items = $items;
 		}
 
+		protected function preload_meta() {
+			// WC 3.0+ handles meta caching in Data Store, but we can ensure it's loaded
+			$this->get_meta_data();
+		}
+
 		public function get_items() {
 			return apply_filters( 'woosb_get_items', $this->items, $this );
+		}
+
+		/**
+		 * Get cached bundled product object
+		 *
+		 * @param int $product_id
+		 *
+		 * @return WC_Product|null
+		 */
+		protected function get_bundled_product_object( $product_id ) {
+			if ( ! isset( $this->bundled_products[ $product_id ] ) ) {
+				$this->bundled_products[ $product_id ] = wc_get_product( $product_id );
+			}
+
+			return $this->bundled_products[ $product_id ] ?: null;
 		}
 	}
 }

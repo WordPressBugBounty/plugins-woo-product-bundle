@@ -3,8 +3,8 @@ Contributors: wpclever
 Donate link: https://wpclever.net
 Tags: woocommerce, wpc, bundle, bundles, kits
 Tested up to: 6.9
-Version: 8.4.9
-Stable tag: 8.4.9
+Version: 8.5.0
+Stable tag: 8.5.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,9 @@ Please try other plugins from us:
 5. Almost done! Click Save and see the result
 
 == Changelog ==
+
+= 8.5.0 =
+* Updated: Optimized the code for better performance
 
 = 8.4.9 =
 * Fixed: Minor CSS/JS issues in the backend

@@ -1,4 +1,5 @@
 <?php
+declare( strict_types=1 );
 defined( 'ABSPATH' ) || exit;
 
 if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
@@ -17,8 +18,10 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 			'variable',
 			'variation'
 		];
+		protected static $bundles_cache = [];
+		protected static $bundled_cache = [];
 
-		public static function instance() {
+		public static function instance(): self {
 			if ( is_null( self::$instance ) ) {
 				self::$instance = new self();
 			}
@@ -33,26 +36,22 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 			self::$localization = (array) get_option( 'woosb_localization', [] );
 		}
 
-		public static function get_image_size() {
-			return apply_filters( 'woosb_image_size', self::$image_size );
+		public static function get_image_size(): string {
+			return (string) apply_filters( 'woosb_image_size', self::$image_size );
 		}
 
-		public static function get_types() {
-			return apply_filters( 'woosb_types', self::$types );
+		public static function get_types(): array {
+			return (array) apply_filters( 'woosb_types', self::$types );
 		}
 
-		public static function round_price( $price ) {
+		public static function round_price( $price ): float {
 			static $decimals = null;
 
-			// Cast price to float once
 			$price         = (float) $price;
 			$rounded_price = $price;
-
-			// Cache the filter results to avoid multiple calls
-			$should_round = ! apply_filters( 'woosb_ignore_round_price', false );
+			$should_round  = ! apply_filters( 'woosb_ignore_round_price', false );
 
 			if ( apply_filters( 'woosb_round_price', $should_round ) ) {
-				// Cache decimals value using static variable
 				if ( $decimals === null ) {
 					$decimals = (int) apply_filters( 'woosb_price_decimals', wc_get_price_decimals() );
 				}
@@ -60,7 +59,7 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 				$rounded_price = round( $price, $decimals );
 			}
 
-			return apply_filters( 'woosb_rounded_price', $rounded_price, $price );
+			return (float) apply_filters( 'woosb_rounded_price', $rounded_price, $price );
 		}
 
 		public static function get_price( $product, $min_or_max = 'min', $for_display = false ) {
@@ -118,7 +117,6 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 				return $product->is_in_stock();
 			}
 		}
-
 
 		public static function has_enough_stock( $product, $qty ) {
 			if ( ! is_a( $product, 'WC_Product' ) ) {
@@ -284,6 +282,12 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 				return apply_filters( 'woosb_get_bundled', [], $product );
 			}
 
+			// Use request cache
+			$cache_key = is_array( $ids ) ? md5( serialize( $ids ) ) : $ids;
+			if ( isset( self::$bundled_cache[ $cache_key ] ) ) {
+				return apply_filters( 'woosb_get_bundled', self::$bundled_cache[ $cache_key ], $product );
+			}
+
 			$bundled    = [];
 			$product_id = 0;
 
@@ -379,10 +383,17 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 				}
 			}
 
+			self::$bundled_cache[ $cache_key ] = $bundled;
+
 			return apply_filters( 'woosb_get_bundled', $bundled, $product );
 		}
 
 		public static function get_bundles( $product_id, $per_page = 500, $offset = 0, $context = 'view' ) {
+			// Use request cache
+			if ( isset( self::$bundles_cache[ $product_id ] ) ) {
+				return apply_filters( 'woosb_get_bundles', self::$bundles_cache[ $product_id ], $product_id );
+			}
+
 			$bundles = [];
 			$sku     = get_post_meta( $product_id, '_sku', true );
 
@@ -471,6 +482,8 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 
 				wp_reset_postdata(); // Use wp_reset_postdata() instead of wp_reset_query()
 			}
+
+			self::$bundles_cache[ $product_id ] = $bundles;
 
 			return apply_filters( 'woosb_get_bundles', $bundles, $product_id );
 		}
