@@ -1206,19 +1206,10 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             }
 
             if ( $product->is_type( 'woosb' ) && ( $items = $product->get_items() ) ) {
-                $product_id            = $product->get_id();
                 $exclude_unpurchasable = $product->exclude_unpurchasable();
                 $custom_price          = $product->get_meta( 'woosb_custom_price' );
                 $price_format          = $this->helper->get_setting( 'price_format', 'from_min' );
                 $default_custom_price  = $this->helper->get_setting( 'price_format_custom', /* translators: dynamic price */ esc_html__( 'before %s after', 'woo-product-bundle' ) );
-
-                if ( ! empty( $custom_price ) ) {
-                    return str_replace( '%s', $price_html, $custom_price );
-                }
-
-                if ( ( $price_format === 'custom' ) && ! empty( $default_custom_price ) ) {
-                    return str_replace( '%s', $price_html, $default_custom_price );
-                }
 
                 if ( ! $product->is_fixed_price() && ! apply_filters( 'woosb_ignore_get_price_html', false ) ) {
                     $discount_amount     = $product->get_discount_amount();
@@ -1383,6 +1374,14 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                         $price_html = apply_filters( 'woosb_get_price_html_auto', $price_html, $price_regular, $price_sale, $price, $product );
                     }
+                }
+
+                if ( ! empty( $custom_price ) ) {
+                    return str_replace( '%s', $price_html, $custom_price );
+                }
+
+                if ( ( $price_format === 'custom' ) && ! empty( $default_custom_price ) ) {
+                    return str_replace( '%s', $price_html, $default_custom_price );
                 }
             }
 
