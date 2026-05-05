@@ -1182,6 +1182,10 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
         }
 
         function cart_contents_weight( $weight ) {
+            if ( apply_filters( 'woosb_ignore_calc_weight', false ) ) {
+                return $weight;
+            }
+
             $weight = 0;
 
             foreach ( WC()->cart->get_cart() as $cart_item ) {
