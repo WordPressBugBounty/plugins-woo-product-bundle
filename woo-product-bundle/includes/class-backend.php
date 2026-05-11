@@ -327,9 +327,12 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                                 <option value="woovr" <?php selected( $variations_selector, 'woovr' ); ?>>
                                                     <?php esc_html_e( 'Use WPC Variations Radio Buttons', 'woo-product-bundle' ); ?>
                                                 </option>
-                                            </select> </label>
-                                        <p class="description">If you choose "Use WPC Variations Radio Buttons", please
-                                            install
+                                            </select>
+                                        </label>
+                                        <p class="woosb-notice">
+                                            WPC Variations Radio Buttons is recommended if you encounter errors with the
+                                            variation swatches you are using, or especially when products have many
+                                            variations. Install
                                             <a href="<?php echo esc_url( admin_url( 'plugin-install.php?tab=plugin-information&plugin=wpc-variations-radio-buttons&TB_iframe=true&width=800&height=550' ) ); ?>"
                                                class="thickbox" title="WPC Variations Radio Buttons">WPC Variations
                                                 Radio Buttons</a> to make it work.

@@ -3,7 +3,7 @@
 Plugin Name: WPC Product Bundles for WooCommerce
 Plugin URI: https://wpclever.net/
 Description: WPC Product Bundles is a plugin that helps you bundle a few products, offer them at a discount, and watch the sales go up!
-Version: 8.5.2
+Version: 8.5.3
 Author: WPClever
 Author URI: https://wpclever.net
 Text Domain: woo-product-bundle
@@ -19,7 +19,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 defined( 'ABSPATH' ) || exit;
 
-! defined( 'WOOSB_VERSION' ) && define( 'WOOSB_VERSION', '8.5.2' );
+! defined( 'WOOSB_VERSION' ) && define( 'WOOSB_VERSION', '8.5.3' );
 ! defined( 'WOOSB_LITE' ) && define( 'WOOSB_LITE', __FILE__ );
 ! defined( 'WOOSB_FILE' ) && define( 'WOOSB_FILE', __FILE__ );
 ! defined( 'WOOSB_URI' ) && define( 'WOOSB_URI', plugin_dir_url( __FILE__ ) );
@@ -29,12 +29,14 @@ defined( 'ABSPATH' ) || exit;
 ! defined( 'WOOSB_REVIEWS' ) && define( 'WOOSB_REVIEWS', 'https://wordpress.org/support/plugin/woo-product-bundle/reviews/' );
 ! defined( 'WOOSB_CHANGELOG' ) && define( 'WOOSB_CHANGELOG', 'https://wordpress.org/plugins/woo-product-bundle/#developers' );
 ! defined( 'WOOSB_DISCUSSION' ) && define( 'WOOSB_DISCUSSION', 'https://wordpress.org/support/plugin/woo-product-bundle' );
-! defined( 'WPC_URI' ) && define( 'WPC_URI', WOOSB_URI );
 
-include 'includes/log/wpc-log.php';
-include 'includes/dashboard/wpc-dashboard.php';
-include 'includes/kit/wpc-kit.php';
-include 'includes/hpos.php';
+// WPC Core
+require_once __DIR__ . '/includes/wpc-core/wpc-core.php';
+wpc_core_register( [
+        'file'    => __FILE__,
+        'version' => WOOSB_VERSION,
+        'prefix'  => 'woosb',
+] );
 
 if ( ! function_exists( 'woosb_init' ) ) {
     add_action( 'plugins_loaded', 'woosb_init', 12 );
