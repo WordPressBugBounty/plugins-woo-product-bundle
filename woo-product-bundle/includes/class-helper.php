@@ -300,7 +300,6 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 
 			// Cache post meta values to reduce database calls
 			$meta_cache = [
-				'optional'    => get_post_meta( $product_id, 'woosb_optional_products', true ) === 'on',
 				'min'         => get_post_meta( $product_id, 'woosb_limit_each_min', true ),
 				'min_default' => get_post_meta( $product_id, 'woosb_limit_each_min_default', true ) === 'on',
 				'max'         => get_post_meta( $product_id, 'woosb_limit_each_max', true )
@@ -327,10 +326,6 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 					}
 
 					if ( ! isset( $item['min'] ) ) {
-						if ( $meta_cache['optional'] ) {
-							$item['optional'] = '1';
-						}
-
 						$item['min'] = $meta_cache['min'];
 
 						if ( $meta_cache['min_default'] ) {

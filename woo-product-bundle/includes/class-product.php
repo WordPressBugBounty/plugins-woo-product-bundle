@@ -620,7 +620,6 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			if ( is_array( $ids ) ) {
 				// Process array format (v7.0+)
 				// Cache meta values for better performance
-				$optional_products      = $this->get_meta( 'woosb_optional_products' ) === 'on';
 				$limit_each_min         = $this->get_meta( 'woosb_limit_each_min' );
 				$limit_each_min_default = $this->get_meta( 'woosb_limit_each_min_default' ) === 'on';
 				$limit_each_max         = $this->get_meta( 'woosb_limit_each_max' );
@@ -651,10 +650,6 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 					// Set min/max values if not set (v8.0+)
 					if ( ! isset( $item['min'] ) ) {
-						if ( $optional_products ) {
-							$item['optional'] = "1";
-						}
-
 						$item['min'] = $limit_each_min_default ? (float) $item['qty'] : $limit_each_min;
 						$item['max'] = $limit_each_max;
 					}

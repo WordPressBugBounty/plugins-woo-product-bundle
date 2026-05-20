@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WPC Product Bundles for WooCommerce 8.5.3\n"
+"Project-Id-Version: WPC Product Bundles for WooCommerce 8.5.4\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woo-product-bundle\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-05-11T09:41:51+00:00\n"
+"POT-Creation-Date: 2026-05-20T03:16:38+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: woo-product-bundle\n"
@@ -149,7 +149,7 @@ msgstr ""
 #. translators: dynamic price
 #: includes/class-backend.php:239
 #: includes/class-backend.php:241
-#: includes/class-woosb.php:1216
+#: includes/class-woosb.php:1240
 #, php-format
 msgid "before %s after"
 msgstr ""
@@ -179,9 +179,9 @@ msgstr ""
 #: includes/class-backend.php:266
 #: includes/class-backend.php:903
 #: includes/class-backend.php:909
-#: includes/class-woosb.php:933
-#: includes/class-woosb.php:951
-#: includes/class-woosb.php:1064
+#: includes/class-woosb.php:957
+#: includes/class-woosb.php:975
+#: includes/class-woosb.php:1088
 msgid "Bundled products"
 msgstr ""
 
@@ -432,7 +432,7 @@ msgstr ""
 #: includes/class-backend.php:515
 #: includes/class-backend.php:893
 #: includes/class-backend.php:898
-#: includes/class-woosb.php:1072
+#: includes/class-woosb.php:1096
 msgid "Bundles"
 msgstr ""
 
@@ -670,7 +670,7 @@ msgstr ""
 #: includes/class-backend.php:915
 #: includes/class-backend.php:921
 #: includes/class-backend.php:1941
-#: includes/class-woosb.php:1017
+#: includes/class-woosb.php:1041
 #, php-format
 msgid "Bundled products: %s"
 msgstr ""
@@ -691,7 +691,7 @@ msgstr ""
 
 #: includes/class-backend.php:949
 #: includes/class-backend.php:955
-#: includes/class-woosb.php:1131
+#: includes/class-woosb.php:1155
 msgid "Update"
 msgstr ""
 
@@ -1145,47 +1145,48 @@ msgid "One of the bundled products is unavailable."
 msgstr ""
 
 #: includes/class-woosb.php:389
-#: includes/class-woosb.php:408
-#: includes/class-woosb.php:420
-#: includes/class-woosb.php:426
-#: includes/class-woosb.php:436
-#: includes/class-woosb.php:444
-#: includes/class-woosb.php:452
-#: includes/class-woosb.php:471
-#: includes/class-woosb.php:482
-#: includes/class-woosb.php:488
-#: includes/class-woosb.php:494
-#: includes/class-woosb.php:507
-#: includes/class-woosb.php:513
-#: includes/class-woosb.php:519
+#: includes/class-woosb.php:410
+#: includes/class-woosb.php:427
+#: includes/class-woosb.php:433
+#: includes/class-woosb.php:443
+#: includes/class-woosb.php:451
+#: includes/class-woosb.php:459
+#: includes/class-woosb.php:478
+#: includes/class-woosb.php:489
+#: includes/class-woosb.php:495
+#: includes/class-woosb.php:510
+#: includes/class-woosb.php:518
+#: includes/class-woosb.php:531
+#: includes/class-woosb.php:537
+#: includes/class-woosb.php:543
 msgid "You cannot add this bundle to the cart."
 msgstr ""
 
 #. translators: product name
-#: includes/class-woosb.php:435
+#: includes/class-woosb.php:442
 #, php-format
 msgid "\"%s\" is un-purchasable."
 msgstr ""
 
 #. translators: product name
-#: includes/class-woosb.php:443
+#: includes/class-woosb.php:450
 #, php-format
 msgid "You cannot add another \"%s\" to the cart."
 msgstr ""
 
 #. translators: product name
-#: includes/class-woosb.php:451
+#: includes/class-woosb.php:458
 #, php-format
 msgid "\"%s\" is protected and cannot be purchased."
 msgstr ""
 
 #. translators: product name
-#: includes/class-woosb.php:470
+#: includes/class-woosb.php:477
 #, php-format
 msgid "\"%s\" has not enough stock."
 msgstr ""
 
-#: includes/class-woosb.php:1293
-#: includes/class-woosb.php:1328
+#: includes/class-woosb.php:1317
+#: includes/class-woosb.php:1352
 msgid "From"
 msgstr ""

@@ -356,7 +356,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                 $ori_ids   = array_filter( array_column( $ori_items, 'id' ) );
 
                 if ( isset( $_REQUEST['woosb_ids'] ) ) {
-                    $ids = $this->helper->clean_ids( $_REQUEST['woosb_ids'] );
+                    $ids = $this->helper->clean_ids( wp_unslash( $_REQUEST['woosb_ids'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
                     $product->build_items( $ids );
                 }
 
@@ -404,7 +404,9 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                         if ( ! function_exists( 'wpml_loaded' ) ) {
                             // don't check it with wpml
-                            if ( ! isset( $ori_items[ $key ] ) || ( ! in_array( $_id, $ori_ids ) && ! in_array( $_parent, $ori_ids ) ) ) {
+                            $ori_item_id = isset( $ori_items[ $key ]['id'] ) ? (int) $ori_items[ $key ]['id'] : 0;
+
+                            if ( ! isset( $ori_items[ $key ] ) || ( $ori_item_id !== (int) $_id && $ori_item_id !== $_parent ) ) {
                                 wc_add_notice( esc_html__( 'You cannot add this bundle to the cart.', 'woo-product-bundle' ), 'error' );
 
                                 return false;
@@ -412,7 +414,12 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         }
 
                         // validate qty
-                        if ( isset( $ori_items[ $key ]['optional'] ) ) {
+                        if ( ! isset( $ori_items[ $key ] ) ) {
+                            // key doesn't exist in original items, already handled above for non-WPML
+                            continue;
+                        }
+
+                        if ( ! empty( $ori_items[ $key ]['optional'] ) ) {
                             $_min = ! empty( $ori_items[ $key ]['min'] ) ? (float) $ori_items[ $key ]['min'] : 0;
                             $_max = ! empty( $ori_items[ $key ]['max'] ) ? (float) $ori_items[ $key ]['max'] : 10000;
 
@@ -422,7 +429,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                 return false;
                             }
                         } else {
-                            if ( $_qty != $ori_items[ $key ]['qty'] ) {
+                            if ( (float) $_qty !== (float) $ori_items[ $key ]['qty'] ) {
                                 wc_add_notice( esc_html__( 'You cannot add this bundle to the cart.', 'woo-product-bundle' ), 'error' );
 
                                 return false;
@@ -457,10 +464,10 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                             if ( $_product->managing_stock() ) {
                                 $qty_in_cart  = ( method_exists( WC()->cart, 'get_cart_item_quantities' ) ) && ( $quantities = WC()->cart->get_cart_item_quantities() ) && method_exists( $_product, 'get_stock_managed_by_id' ) && isset( $quantities[ $_product->get_stock_managed_by_id() ] ) ? $quantities[ $_product->get_stock_managed_by_id() ] : 0;
                                 $qty_to_check = 0;
-                                $_items       = $product->get_items();
 
-                                foreach ( $_items as $_item ) {
-                                    if ( $_item['id'] == $_id ) {
+                                // use already-fetched $items instead of calling get_items() again
+                                foreach ( $items as $_item ) {
+                                    if ( (int) $_item['id'] === (int) $_id ) {
                                         $qty_to_check += $_item['qty'];
                                     }
                                 }
@@ -488,6 +495,23 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         wc_add_notice( esc_html__( 'You cannot add this bundle to the cart.', 'woo-product-bundle' ), 'error' );
 
                         return false;
+                    }
+
+                    // validate that all required (non-optional) items are present in submitted items
+                    if ( $has_optional ) {
+                        foreach ( $ori_items as $ori_key => $ori_item ) {
+                            if ( empty( $ori_item['id'] ) || ! empty( $ori_item['optional'] ) ) {
+                                // skip heading/paragraph and optional items
+                                continue;
+                            }
+
+                            // required item must exist with the exact same key
+                            if ( ! isset( $items[ $ori_key ] ) ) {
+                                wc_add_notice( esc_html__( 'You cannot add this bundle to the cart.', 'woo-product-bundle' ), 'error' );
+
+                                return false;
+                            }
+                        }
                     }
 
                     if ( $has_optional && ( ( $min_whole > 0 && $count < $min_whole ) || ( $max_whole > 0 && $count > $max_whole ) ) ) {
