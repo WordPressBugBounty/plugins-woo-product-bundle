@@ -29,6 +29,8 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
             // Backend AJAX
             add_action( 'wp_ajax_woosb_update_search_settings', [ $this, 'ajax_update_search_settings' ] );
             add_action( 'wp_ajax_woosb_get_search_results', [ $this, 'ajax_get_search_results' ] );
+            add_action( 'wp_ajax_woosb_import_export', [ $this, 'ajax_import_export' ] );
+            add_action( 'wp_ajax_woosb_import_export_save', [ $this, 'ajax_import_export_save' ] );
 
             // Add to selector
             add_filter( 'product_type_selector', [ $this, 'product_type_selector' ] );
@@ -1374,7 +1376,13 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                         </td>
                     </tr>
                     <tr class="woosb_tr_space">
-                        <th><?php esc_html_e( 'Selected', 'woo-product-bundle' ); ?></th>
+                        <th>
+                            <?php esc_html_e( 'Selected', 'woo-product-bundle' ); ?>
+                            <div class="woosb_tools">
+                                <a href="#"
+                                   class="woosb-import-export"><?php esc_html_e( 'import/export', 'woo-product-bundle' ); ?></a>
+                            </div>
+                        </th>
                         <td>
                             <div id="woosb_selected" class="woosb_selected">
                                 <div class="woosb-ul">
@@ -2296,6 +2304,58 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
             }
 
             return $object;
+        }
+
+        function ajax_import_export() {
+            if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['nonce'] ), 'woosb-security' ) || ! current_user_can( 'manage_options' ) ) {
+                die( 'Permissions check failed!' );
+            }
+
+            $ids      = [];
+            $ids_arr  = [];
+            $ids_data = sanitize_post( $_POST['ids'] ?? '' );
+            parse_str( $ids_data, $ids_arr );
+
+            if ( isset( $ids_arr['woosb_ids'] ) && is_array( $ids_arr['woosb_ids'] ) ) {
+                $ids = $ids_arr['woosb_ids'];
+            }
+
+            echo '<textarea class="woosb_import_export_data" style="width: 100%; height: 200px">' . esc_textarea( ( ! empty( $ids ) ? wp_json_encode( $ids, JSON_PRETTY_PRINT ) : '' ) ) . '</textarea>';
+            echo '<div style="display: flex; align-items: center"><button class="button button-primary woosb-import-export-save">' . esc_html__( 'Update', 'woo-product-bundle' ) . '</button>';
+            echo '<span style="color: #ff4f3b; font-size: 10px; margin-left: 10px">' . esc_html__( '* All selected products will be replaced after pressing Update!', 'woo-product-bundle' ) . '</span>';
+            echo '</div>';
+
+            wp_die();
+        }
+
+        function ajax_import_export_save() {
+            if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['nonce'] ), 'woosb-security' ) || ! current_user_can( 'manage_options' ) ) {
+                die( 'Permissions check failed!' );
+            }
+
+            $ids = sanitize_textarea_field( $_POST['ids'] ?? '' );
+
+            if ( ! empty( $ids ) ) {
+                $items = json_decode( stripcslashes( $ids ), true );
+
+                if ( ! empty( $items ) ) {
+                    foreach ( $items as $item_key => $item ) {
+                        if ( ! empty( $item['id'] ) ) {
+                            $_product = wc_get_product( $item['id'] );
+
+                            if ( ! $_product || in_array( $_product->get_type(), $this->helper::get_types(), true ) ) {
+                                continue;
+                            }
+
+                            $this->product_data_li( $_product, $item, $item_key );
+                        } else {
+                            $this->text_data_li( $item, $item_key );
+                        }
+                    }
+                }
+            }
+
+            wp_die();
         }
     }
 
