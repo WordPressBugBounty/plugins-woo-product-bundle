@@ -118,6 +118,10 @@ if ( ! class_exists( 'WPCleverWoosb_Blocks' ) ) {
 				return $response;
 			}
 
+			if ( is_null( WC()->cart ) ) {
+				return $response;
+			}
+
 			$cart_contents    = WC()->cart->get_cart();
 			$hide_bundled     = WPCleverWoosb_Helper()->get_setting( 'hide_bundled', 'no' ) !== 'no';
 			$hide_bundle_name = WPCleverWoosb_Helper()->get_setting( 'hide_bundle_name', 'no' ) !== 'no';
