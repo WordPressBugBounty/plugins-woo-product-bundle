@@ -32,6 +32,11 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
             add_action( 'wp_ajax_woosb_import_export', [ $this, 'ajax_import_export' ] );
             add_action( 'wp_ajax_woosb_import_export_save', [ $this, 'ajax_import_export_save' ] );
 
+            // Search query modifiers
+            add_action( 'pre_get_posts', [ $this, 'search_sku' ] );
+            add_action( 'pre_get_posts', [ $this, 'search_exact' ] );
+            add_action( 'pre_get_posts', [ $this, 'search_sentence' ] );
+
             // Add to selector
             add_filter( 'product_type_selector', [ $this, 'product_type_selector' ] );
 
@@ -2003,7 +2008,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
         }
 
         function search_sku( $query ) {
-            if ( $query->is_search && isset( $query->query['is_woosb'] ) ) {
+            if ( $query->is_search && isset( $query->query['is_woosb'] ) && ( $this->helper->get_setting( 'search_sku', 'no' ) === 'yes' ) ) {
                 global $wpdb;
 
                 $sku = sanitize_text_field( $query->query['s'] );
@@ -2031,13 +2036,13 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
         }
 
         function search_exact( $query ) {
-            if ( $query->is_search && isset( $query->query['is_woosb'] ) ) {
+            if ( $query->is_search && isset( $query->query['is_woosb'] ) && ( $this->helper->get_setting( 'search_exact', 'no' ) === 'yes' ) ) {
                 $query->set( 'exact', true );
             }
         }
 
         function search_sentence( $query ) {
-            if ( $query->is_search && isset( $query->query['is_woosb'] ) ) {
+            if ( $query->is_search && isset( $query->query['is_woosb'] ) && ( $this->helper->get_setting( 'search_sentence', 'no' ) === 'yes' ) ) {
                 $query->set( 'sentence', true );
             }
         }

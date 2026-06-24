@@ -145,8 +145,6 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
         }
 
         function init() {
-            // load text-domain
-            load_plugin_textdomain( 'woo-product-bundle', false, basename( WOOSB_DIR ) . '/languages/' );
 
             // shortcode
             add_shortcode( 'woosb_form', [ $this, 'shortcode_form' ] );

@@ -118,7 +118,7 @@ if ( ! class_exists( 'WPCleverWoosb_Blocks' ) ) {
 				return $response;
 			}
 
-			if ( is_null( WC()->cart ) ) {
+			if ( ! function_exists( 'WC' ) || ! WC() || ! WC()->cart ) {
 				return $response;
 			}
 
