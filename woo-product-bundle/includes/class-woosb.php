@@ -764,6 +764,9 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                 // bundles
                 if ( ! empty( $cart_item['woosb_ids'] ) && isset( $cart_item['woosb_fixed_price'] ) && ! $cart_item['woosb_fixed_price'] ) {
+                    // Rebuild items to sync quantity and avoid price being zero when default quantity is 0
+                    $cart_item['data']->build_items( $cart_item['woosb_ids'] );
+
                     // set tax status 'none'
                     $cart_item['data']->set_tax_status( 'none' );
 
@@ -1036,7 +1039,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                     $items_str = apply_filters( 'woosb_order_bundled_product_names', implode( '; ', $items_str ), $items );
                 }
 
-                echo apply_filters( 'woosb_before_order_itemmeta_bundles', '<div class="woosb-itemmeta-bundles">' . /* translators: bundled products */ sprintf( $this->helper->localization( 'bundled_products_s', esc_html__( 'Bundled products: %s', 'woo-product-bundle' ) ), $items_str ) . '</div>', $order_item_id, $order_item );
+                echo apply_filters( 'woosb_before_order_itemmeta_bundles', '<div class="woosb-itemmeta-bundles">' . /* translators: %s is the product list */ sprintf( $this->helper->localization( 'bundled_products_s', esc_html__( 'Bundled products: %s', 'woo-product-bundle' ) ), $items_str ) . '</div>', $order_item_id, $order_item );
             }
         }
 

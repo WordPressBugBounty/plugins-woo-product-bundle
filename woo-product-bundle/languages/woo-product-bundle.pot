@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: WPC Product Bundles for WooCommerce 8.5.8\n"
+"Project-Id-Version: WPC Product Bundles for WooCommerce 8.5.9\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woo-product-bundle\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-29T15:54:02+00:00\n"
+"POT-Creation-Date: 2026-07-21T02:35:16+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: woo-product-bundle\n"
@@ -146,11 +146,10 @@ msgstr ""
 msgid "Default custom display price"
 msgstr ""
 
-#. translators: %s is the price value
 #. translators: dynamic price
 #: includes/class-backend.php:246
 #: includes/class-backend.php:248
-#: includes/class-woosb.php:1238
+#: includes/class-woosb.php:1241
 #, php-format
 msgid "before %s after"
 msgstr ""
@@ -180,9 +179,9 @@ msgstr ""
 #: includes/class-backend.php:273
 #: includes/class-backend.php:910
 #: includes/class-backend.php:916
-#: includes/class-woosb.php:955
-#: includes/class-woosb.php:973
-#: includes/class-woosb.php:1086
+#: includes/class-woosb.php:958
+#: includes/class-woosb.php:976
+#: includes/class-woosb.php:1089
 msgid "Bundled products"
 msgstr ""
 
@@ -433,7 +432,7 @@ msgstr ""
 #: includes/class-backend.php:522
 #: includes/class-backend.php:900
 #: includes/class-backend.php:905
-#: includes/class-woosb.php:1094
+#: includes/class-woosb.php:1097
 msgid "Bundles"
 msgstr ""
 
@@ -667,17 +666,15 @@ msgstr ""
 msgid "Single product page"
 msgstr ""
 
-#. translators: bundled products
 #. translators: %s is the product list
 #: includes/class-backend.php:922
 #: includes/class-backend.php:929
 #: includes/class-backend.php:1956
-#: includes/class-woosb.php:1039
+#: includes/class-woosb.php:1042
 #, php-format
 msgid "Bundled products: %s"
 msgstr ""
 
-#. translators: bundled in
 #. translators: %s is the parent bundle name
 #: includes/class-backend.php:935
 #: includes/class-backend.php:942
@@ -696,7 +693,7 @@ msgstr ""
 #: includes/class-backend.php:958
 #: includes/class-backend.php:964
 #: includes/class-backend.php:2331
-#: includes/class-woosb.php:1153
+#: includes/class-woosb.php:1156
 msgid "Update"
 msgstr ""
 
@@ -1199,7 +1196,7 @@ msgstr ""
 msgid "\"%s\" has not enough stock."
 msgstr ""
 
-#: includes/class-woosb.php:1315
-#: includes/class-woosb.php:1350
+#: includes/class-woosb.php:1318
+#: includes/class-woosb.php:1353
 msgid "From"
 msgstr ""

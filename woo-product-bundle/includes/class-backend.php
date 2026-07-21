@@ -242,7 +242,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                         <label>
                                             <input type="text" class="regular-text"
                                                    name="woosb_settings[price_format_custom]"
-                                                   placeholder="<?php /* translators: %s is the price value */
+                                                   placeholder="<?php /* translators: dynamic price */
                                                    esc_attr_e( 'before %s after', 'woo-product-bundle' ); ?>"
                                                    value="<?php /* translators: dynamic price */
                                                    echo $this->helper->get_setting( 'price_format_custom', esc_html__( 'before %s after', 'woo-product-bundle' ) ); ?>"/>
@@ -918,12 +918,12 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th><?php /* translators: bundled products */
+                                    <th><?php /* translators: %s is the product list */
                                         esc_html_e( 'Bundled products: %s', 'woo-product-bundle' ); ?></th>
                                     <td>
                                         <label>
                                             <input type="text" name="woosb_localization[bundled_products_s]"
-                                                   class="large-text" value="<?php /* translators: bundled products */
+                                                   class="large-text" value="<?php /* translators: %s is the product list */
                                             echo esc_attr( $this->helper->localization( 'bundled_products_s' ) ); ?>"
                                                    placeholder="<?php /* translators: %s is the product list */
                                                    esc_attr_e( 'Bundled products: %s', 'woo-product-bundle' ); ?>"/>
@@ -931,12 +931,12 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th><?php /* translators: bundled in */
+                                    <th><?php /* translators: %s is the parent bundle name */
                                         esc_html_e( 'Bundled in: %s', 'woo-product-bundle' ); ?></th>
                                     <td>
                                         <label>
                                             <input type="text" name="woosb_localization[bundled_in_s]"
-                                                   class="large-text" value="<?php /* translators: bundled in */
+                                                   class="large-text" value="<?php /* translators: %s is the parent bundle name */
                                             echo esc_attr( $this->helper->localization( 'bundled_in_s' ) ); ?>"
                                                    placeholder="<?php /* translators: %s is the parent bundle name */
                                                    esc_attr_e( 'Bundled in: %s', 'woo-product-bundle' ); ?>"/>
@@ -1953,11 +1953,11 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
 
                 $items_str = apply_filters( 'woosb_admin_order_bundled_product_names', '<ul>' . implode( '', $items_str ) . '</ul>', $items );
 
-                echo apply_filters( 'woosb_before_admin_order_itemmeta_bundles', '<div class="woosb-itemmeta-bundles woosb-admin-itemmeta-bundles">' . /* translators: bundled products */ sprintf( $this->helper->localization( 'bundled_products_s', esc_html__( 'Bundled products: %s', 'woo-product-bundle' ) ), $items_str ) . '</div>', $order_item_id, $order_item );
+                echo apply_filters( 'woosb_before_admin_order_itemmeta_bundles', '<div class="woosb-itemmeta-bundles woosb-admin-itemmeta-bundles">' . /* translators: %s is the product list */ sprintf( $this->helper->localization( 'bundled_products_s', esc_html__( 'Bundled products: %s', 'woo-product-bundle' ) ), $items_str ) . '</div>', $order_item_id, $order_item );
             }
 
             if ( $parent_id = $order_item->get_meta( '_woosb_parent_id' ) ) {
-                echo apply_filters( 'woosb_before_admin_order_itemmeta_bundled', '<div class="woosb-itemmeta-bundled woosb-admin-itemmeta-bundled">' . /* translators: bundled in */ sprintf( $this->helper->localization( 'bundled_in_s', esc_html__( 'Bundled in: %s', 'woo-product-bundle' ) ), esc_html( get_the_title( $parent_id ) ) ) . '</div>', $order_item_id, $order_item );
+                echo apply_filters( 'woosb_before_admin_order_itemmeta_bundled', '<div class="woosb-itemmeta-bundled woosb-admin-itemmeta-bundled">' . /* translators: %s is the parent bundle name */ sprintf( $this->helper->localization( 'bundled_in_s', esc_html__( 'Bundled in: %s', 'woo-product-bundle' ) ), esc_html( get_the_title( $parent_id ) ) ) . '</div>', $order_item_id, $order_item );
             }
         }
 
