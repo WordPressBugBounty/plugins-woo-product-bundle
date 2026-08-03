@@ -3,8 +3,8 @@ Contributors: wpclever
 Donate link: https://wpclever.net
 Tags: woocommerce, wpc, bundle, bundles, kits
 Tested up to: 7.0
-Version: 8.6.0
-Stable tag: 8.6.0
+Version: 8.6.1
+Stable tag: 8.6.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,9 @@ Please try other plugins from us:
 5. Almost done! Click Save and see the result
 
 == Changelog ==
+
+= 8.6.1 =
+* Fixed: Stock quantity calculating for the bundle
 
 = 8.6.0 =
 * Fixed: Update the bundle price whenever there are price changes for individual products
