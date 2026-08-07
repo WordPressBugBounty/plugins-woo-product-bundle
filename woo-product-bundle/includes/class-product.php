@@ -379,7 +379,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				$final_status = 'outofstock';
 			} elseif ( $min_stock_qty !== null && $min_stock_qty > 0 ) {
 				$final_status = 'instock';
-			} elseif ( $has_backorder_item || $backorders !== 'no' ) {
+			} elseif ( $has_backorder_item || ( $min_stock_qty !== null && $min_stock_qty <= 0 ) ) {
 				$final_status = 'onbackorder';
 			} else {
 				$final_status = $stock_status;
@@ -391,7 +391,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				'stock_status'       => $final_status,
 				'manages_stock'      => ( $skip_optional || ! $check_global_stock ) ? null : $manages_stock,
 				'min_stock_quantity' => ( $skip_optional || ! $check_global_stock ) ? null : $min_stock_qty,
-				'backorders'         => $skip_optional ? null : $backorders,
+				'backorders'         => ( $skip_optional || ! $manages_stock ) ? null : $backorders,
 				'sold_individually'  => $skip_optional ? null : $sold_individually,
 			];
 		}
