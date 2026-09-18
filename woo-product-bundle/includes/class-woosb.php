@@ -1531,7 +1531,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                     $price_html = apply_filters( 'woosb_get_price_html_min_only', wc_price( $total_min ) . $product->get_price_suffix(), $total_min, $product );
                                     break;
                                 case 'from_min':
-                                    $price_html = apply_filters( 'woosb_get_price_html_from_min', '<span>' . esc_html__( 'From', 'woo-product-bundle' ) . '</span> ' . wc_price( $total_min ) . $product->get_price_suffix(), $total_min, $product );
+                                    $price_html = apply_filters( 'woosb_get_price_html_from_min', '<span>' . esc_html( $this->helper->localization( 'from', esc_html__( 'From', 'woo-product-bundle' ) ) ) . '</span> ' . wc_price( $total_min ) . $product->get_price_suffix(), $total_min, $product );
                                     break;
                             }
                         }
@@ -1566,7 +1566,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                     $price_html = apply_filters( 'woosb_get_price_html_min_max', wc_price( $min_price ) . ' - ' . wc_price( $max_price ) . $product->get_price_suffix(), $min_price, $max_price, $product );
                                     break;
                                 case 'from_min':
-                                    $price_html = apply_filters( 'woosb_get_price_html_from_min', '<span>' . esc_html__( 'From', 'woo-product-bundle' ) . '</span> ' . wc_price( $min_price ) . $product->get_price_suffix(), $min_price, $product );
+                                    $price_html = apply_filters( 'woosb_get_price_html_from_min', '<span>' . esc_html( $this->helper->localization( 'from', esc_html__( 'From', 'woo-product-bundle' ) ) ) . '</span> ' . wc_price( $min_price ) . $product->get_price_suffix(), $min_price, $product );
                                     break;
                             }
                         }

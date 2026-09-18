@@ -787,6 +787,16 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                     </td>
                                 </tr>
                                 <tr>
+                                    <th><?php esc_html_e( 'From', 'woo-product-bundle' ); ?></th>
+                                    <td>
+                                        <label>
+                                            <input type="text" name="woosb_localization[from]" class="regular-text"
+                                                   value="<?php echo esc_attr( $this->helper->localization( 'from' ) ); ?>"
+                                                   placeholder="<?php esc_attr_e( 'From', 'woo-product-bundle' ); ?>"/>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
                                     <th><?php esc_html_e( 'Total text', 'woo-product-bundle' ); ?></th>
                                     <td>
                                         <label>

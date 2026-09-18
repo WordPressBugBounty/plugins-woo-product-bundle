@@ -41,7 +41,7 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 
 			// PayPal
 			add_filter( 'woocommerce_paypal_payments_simulate_cart_enabled', '__return_false' );
-			add_filter( 'woocommerce_paypal_payments_simulate_cart_prevent_updates', '__return_false' );
+			//add_filter( 'woocommerce_paypal_payments_simulate_cart_prevent_updates', '__return_false' );
 
 			/*
 			 * WooCommerce PDF Invoices & Packing Slips
