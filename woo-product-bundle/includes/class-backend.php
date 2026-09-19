@@ -1956,7 +1956,7 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                 continue;
                             }
 
-                            $items_str[] = apply_filters( 'woosb_admin_order_bundled_product_name', '<li>' . $item['qty'] . ' × ' . esc_html( get_the_title( $item['id'] ) ) . '</li>', $item );
+                            $items_str[] = apply_filters( 'woosb_admin_order_bundled_product_name', '<li>' . esc_html( $item['qty'] ) . ' × ' . esc_html( get_the_title( $item['id'] ) ) . '</li>', $item );
                         }
                     }
                 }

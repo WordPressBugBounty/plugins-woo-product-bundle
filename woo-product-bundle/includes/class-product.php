@@ -706,6 +706,9 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 						'attrs' => []
 					], $item );
 
+					// Ensure qty is always a clean number (prevents XSS via string qty injection)
+					$item['qty'] = (float) $item['qty'];
+
 					// Process SKU if enabled
 					if ( $use_sku && ! empty( $item['sku'] ) ) {
 						$new_id = $this->helper->get_product_id_from_sku( $item['sku'] );

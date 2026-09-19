@@ -1150,7 +1150,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                             continue;
                         }
 
-                        $items_str[] = apply_filters( 'woosb_order_bundled_product_name', '<li>' . $item['qty'] . ' × ' . esc_html( get_the_title( $item['id'] ) ) . '</li>', $item );
+                        $items_str[] = apply_filters( 'woosb_order_bundled_product_name', '<li>' . esc_html( $item['qty'] ) . ' × ' . esc_html( get_the_title( $item['id'] ) ) . '</li>', $item );
                     }
                 }
 
@@ -1168,7 +1168,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                             continue;
                         }
 
-                        $items_str[] = apply_filters( 'woosb_order_bundled_product_name', $item['qty'] . ' × ' . esc_html( get_the_title( $item['id'] ) ), $item );
+                        $items_str[] = apply_filters( 'woosb_order_bundled_product_name', esc_html( $item['qty'] ) . ' × ' . esc_html( get_the_title( $item['id'] ) ), $item );
                     }
                 }
 
@@ -1219,7 +1219,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                     continue;
                                 }
 
-                                $items_str[] = apply_filters( 'woosb_order_bundled_product_name', '<li>' . $item['qty'] . ' × ' . esc_html( get_the_title( $item['id'] ) ) . '</li>', $item );
+                                $items_str[] = apply_filters( 'woosb_order_bundled_product_name', '<li>' . esc_html( $item['qty'] ) . ' × ' . esc_html( get_the_title( $item['id'] ) ) . '</li>', $item );
                             }
                         }
                     }
@@ -1235,7 +1235,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                     continue;
                                 }
 
-                                $items_str[] = apply_filters( 'woosb_order_bundled_product_name', $item['qty'] . ' × ' . esc_html( get_the_title( $item['id'] ) ), $item );
+                                $items_str[] = apply_filters( 'woosb_order_bundled_product_name', esc_html( $item['qty'] ) . ' × ' . esc_html( get_the_title( $item['id'] ) ), $item );
                             }
                         }
                     }
@@ -2058,7 +2058,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                             echo '<div class="woosb-name">';
 
                             if ( ( $this->helper->get_setting( 'bundled_qty', 'yes' ) === 'yes' ) && ! $optional ) {
-                                echo apply_filters( 'woosb_item_qty', $item['qty'] . ' × ', $item['qty'], $product );
+                                echo apply_filters( 'woosb_item_qty', esc_html( $item['qty'] ) . ' × ', $item['qty'], $product );
                             }
 
                             $item_name    = '';
