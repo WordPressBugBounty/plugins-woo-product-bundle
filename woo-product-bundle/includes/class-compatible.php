@@ -3,8 +3,10 @@ defined( 'ABSPATH' ) || exit;
 
 if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 	class WPCleverWoosb_Compatible {
-		protected static $instance = null;
-		protected $helper = null;
+		protected static $instance             = null;
+		protected static $options_post_backup  = [];
+		protected static $options_files_backup = [];
+		protected $helper                      = null;
 
 		public static function instance() {
 			if ( is_null( self::$instance ) ) {
@@ -72,6 +74,12 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 				add_filter( 'wf_pklist_alter_order_items', [ $this, 'pklist_order_hide_bundled' ], 99 );
 				add_filter( 'wf_pklist_alter_package_order_items', [ $this, 'pklist_package_hide_bundled' ], 99 );
 			}
+
+			// Extra product options / addons compatibility
+			add_filter( 'woosb_parent_item_price_before_set', [ $this, 'parent_item_extra_options_price' ], 10, 2 );
+			add_action( 'woosb_before_add_to_cart_items', [ $this, 'clear_extra_options_before_add_child' ], 10, 4 );
+			add_action( 'woosb_after_add_to_cart_items', [ $this, 'restore_extra_options_after_add_child' ], 10, 4 );
+			add_filter( 'woocommerce_add_cart_item_data', [ $this, 'remove_child_extra_options_data' ], 9999, 2 );
 		}
 
 		function wpcap_added_to_order( $item_id, $order, $parsed_data ) {
@@ -563,6 +571,124 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 			}
 
 			return $order_package;
+		}
+
+		/**
+		 * Add extra product options price to bundle parent cart item.
+		 * Supports TM Extra Product Options (Themecomplete Extra Product Options).
+		 *
+		 * @param float $price Bundle parent price.
+		 * @param array $parent_item Bundle parent cart item.
+		 * @return float
+		 */
+		function parent_item_extra_options_price( $price, $parent_item ) {
+			// TM Extra Product Options
+			if ( ! empty( $parent_item['tmcartepo'] ) && isset( $parent_item['tm_epo_options_prices'] ) ) {
+				$price += (float) $parent_item['tm_epo_options_prices'];
+			}
+
+			return $price;
+		}
+
+		/**
+		 * Clear extra product options data before adding bundled child items.
+		 *
+		 * @param array  $items Bundle items.
+		 * @param string $cart_item_key Cart item key of the bundle parent.
+		 * @param int    $product_id Bundle parent product ID.
+		 * @param int    $quantity Bundle quantity.
+		 */
+		function clear_extra_options_before_add_child( $items, $cart_item_key, $product_id, $quantity ) {
+			self::$options_post_backup  = [];
+			self::$options_files_backup = [];
+
+			$prefixes   = apply_filters( 'woosb_clear_extra_options_prefixes', [ 'tmcp_', 'tc_', 'cpf_', 'tm_', 'addon-', 'yith_wapo_', 'yith-wapo-' ] );
+			$exact_keys = apply_filters( 'woosb_clear_extra_options_exact_keys', [ 'cpf_product_price', 'cpf_bto_price', 'tm_epo_options_prices', 'tmcartepo', 'tm_meta_cpf' ] );
+
+			if ( ! empty( $_POST ) ) {
+				foreach ( $_POST as $key => $value ) {
+					$should_clear = in_array( $key, $exact_keys, true );
+
+					if ( ! $should_clear ) {
+						foreach ( $prefixes as $prefix ) {
+							if ( strpos( $key, $prefix ) === 0 ) {
+								$should_clear = true;
+								break;
+							}
+						}
+					}
+
+					if ( $should_clear ) {
+						self::$options_post_backup[ $key ] = $value;
+						unset( $_POST[ $key ] );
+
+						if ( isset( $_REQUEST[ $key ] ) ) {
+							unset( $_REQUEST[ $key ] );
+						}
+					}
+				}
+			}
+
+			if ( ! empty( $_FILES ) ) {
+				foreach ( $_FILES as $key => $file ) {
+					foreach ( $prefixes as $prefix ) {
+						if ( strpos( $key, $prefix ) === 0 ) {
+							self::$options_files_backup[ $key ] = $file;
+							unset( $_FILES[ $key ] );
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		/**
+		 * Restore extra product options data after adding bundled child items.
+		 *
+		 * @param array  $items Bundle items.
+		 * @param string $cart_item_key Cart item key of the bundle parent.
+		 * @param int    $product_id Bundle parent product ID.
+		 * @param int    $quantity Bundle quantity.
+		 */
+		function restore_extra_options_after_add_child( $items, $cart_item_key, $product_id, $quantity ) {
+			if ( ! empty( self::$options_post_backup ) ) {
+				foreach ( self::$options_post_backup as $key => $value ) {
+					$_POST[ $key ]    = $value;
+					$_REQUEST[ $key ] = $value;
+				}
+
+				self::$options_post_backup = [];
+			}
+
+			if ( ! empty( self::$options_files_backup ) ) {
+				foreach ( self::$options_files_backup as $key => $file ) {
+					$_FILES[ $key ] = $file;
+				}
+
+				self::$options_files_backup = [];
+			}
+		}
+
+		/**
+		 * Strip extra options data from bundled child items if present.
+		 *
+		 * @param array $cart_item_data Cart item data.
+		 * @param int   $product_id Product ID.
+		 * @return array
+		 */
+		function remove_child_extra_options_data( $cart_item_data, $product_id ) {
+			if ( ! empty( $cart_item_data['woosb_parent_id'] ) || ! empty( $cart_item_data['woosb_parent_key'] ) ) {
+				unset(
+					$cart_item_data['tmcartepo'],
+					$cart_item_data['tmcartfee'],
+					$cart_item_data['tmdata'],
+					$cart_item_data['tmpost_data'],
+					$cart_item_data['epo_price_override'],
+					$cart_item_data['tmhasepo']
+				);
+			}
+
+			return $cart_item_data;
 		}
 	}
 

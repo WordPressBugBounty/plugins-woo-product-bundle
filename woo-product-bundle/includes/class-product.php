@@ -434,9 +434,18 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 			$data = $this->compute_stock_data();
 
-			// Guards triggered or manages_stock not computed (optional items present)
-			if ( ! $data['computed'] || $data['manages_stock'] === null ) {
-				return $parent_manage;
+			// Guards triggered: inventory disabled or no items — respect parent value.
+			// manages_stock === null means skip_optional is active (bundle has optional items)
+			// or global stock is off. In both cases, bundle-level manage stock flag takes
+			// priority: if is_manage_stock() is OFF, never expose the raw DB _manage_stock value.
+			if ( ! $data['computed'] ) {
+				return $this->is_manage_stock() ? $parent_manage : false;
+			}
+
+			if ( $data['manages_stock'] === null ) {
+				// skip_optional was active: computed but manages_stock not resolved.
+				// Still defer to bundle-level flag to avoid leaking raw DB _manage_stock.
+				return $this->is_manage_stock() ? $parent_manage : false;
 			}
 
 			if ( $data['manages_stock'] ) {

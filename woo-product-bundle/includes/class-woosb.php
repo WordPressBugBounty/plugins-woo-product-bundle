@@ -672,6 +672,8 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             ];
 
             if ( is_array( $items ) && ( count( $items ) > 0 ) ) {
+                do_action( 'woosb_before_add_to_cart_items', $items, $cart_item_key, $product_id, $quantity );
+
                 foreach ( $items as $item ) {
                     $_id           = $item['id'];
                     $_qty          = $item['qty'];
@@ -723,7 +725,11 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                     $_data = apply_filters( 'woosb_bundled_cart_item_data', $_data, $item, $cart_item_key );
 
+                    do_action( 'woosb_before_add_to_cart_item', $item, $cart_item_key, $product_id, $quantity, $_data );
+
                     $_key = WC()->cart->add_to_cart( $_id, $_qty * $quantity, $_variation_id, $_variation, $_data );
+
+                    do_action( 'woosb_after_add_to_cart_item', $_key, $item, $cart_item_key, $product_id, $quantity, $_data );
 
                     if ( empty( $_key ) ) {
                         if ( ! $exclude_unpurchasable ) {
@@ -751,6 +757,8 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         WC()->cart->cart_contents[ $cart_item_key ]['woosb_keys'][] = $_key;
                     }
                 } // end foreach
+
+                do_action( 'woosb_after_add_to_cart_items', $items, $cart_item_key, $product_id, $quantity );
             }
         }
 
@@ -916,13 +924,16 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         $parent_item['data']->build_items( $parent_item['woosb_ids'] );
                     }
 
+                    // Bundle parent price (default 0 for auto pricing, can be modified for extra product addons)
+                    $parent_price = (float) apply_filters( 'woosb_parent_item_price_before_set', 0, $parent_item, $cart_object );
+
                     // Set tax status 'none' for bundle parent if required
-                    if ( apply_filters( 'woosb_ignore_tax_for_bundles', true ) ) {
+                    if ( apply_filters( 'woosb_ignore_tax_for_bundles', $parent_price > 0 ? false : true, $parent_item, $parent_price ) ) {
                         $parent_item['data']->set_tax_status( 'none' );
                     }
 
-                    // Bundle parent price is set to 0 (no negative pricing)
-                    $parent_item['data']->set_price( 0 );
+                    // Bundle parent price is set to 0 (or custom price from addons)
+                    $parent_item['data']->set_price( $parent_price );
                     $parent_item['data']->get_price();
 
                     // 1. Calculate base unit price and display price for each child
@@ -1014,6 +1025,22 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                             $bundles_display_price += $this->helper->round_price( $_child_display );
                         }
+                    }
+
+                    if ( $parent_price > 0 ) {
+                        if ( ! is_null( WC()->cart ) && WC()->cart->display_prices_including_tax() ) {
+                            $_parent_display = wc_get_price_including_tax( $parent_item['data'], [
+                                'price' => $parent_price,
+                                'qty'   => 1,
+                            ] );
+                        } else {
+                            $_parent_display = wc_get_price_excluding_tax( $parent_item['data'], [
+                                'price' => $parent_price,
+                                'qty'   => 1,
+                            ] );
+                        }
+
+                        $bundles_display_price += $this->helper->round_price( $_parent_display );
                     }
 
                     $bundles_display_price = apply_filters( 'woosb_bundles_display_price', $bundles_display_price, $parent_item );
