@@ -464,10 +464,24 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			}
 
 			if ( $this->is_manage_stock() ) {
-				return $parent_status === 'instock' ? $data['stock_status'] : $parent_status;
+				$status = $parent_status === 'instock' ? $data['stock_status'] : $parent_status;
+			} else {
+				$status = $data['stock_status'];
 			}
 
-			return $data['stock_status'];
+			if ( $context === 'view' && $status !== $parent_status ) {
+				$this->set_stock_status( $status );
+
+				if ( apply_filters( 'woosb_update_stock', true ) ) {
+					if ( function_exists( 'wc_update_product_stock_status' ) ) {
+						wc_update_product_stock_status( $this->get_id(), $status );
+					} else {
+						update_post_meta( $this->get_id(), '_stock_status', $status );
+					}
+				}
+			}
+
+			return $status;
 		}
 
 		public function get_stock_quantity( $context = 'view' ) {
@@ -526,10 +540,20 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			}
 
 			if ( $this->is_manage_stock() ) {
-				return $parent_backorders === 'yes' ? $data['backorders'] : $parent_backorders;
+				$backorders = $parent_backorders === 'yes' ? $data['backorders'] : $parent_backorders;
+			} else {
+				$backorders = $data['backorders'];
 			}
 
-			return $data['backorders'];
+			if ( $context === 'view' && $backorders !== $parent_backorders ) {
+				$this->set_backorders( $backorders );
+
+				if ( apply_filters( 'woosb_update_stock', true ) ) {
+					update_post_meta( $this->get_id(), '_backorders', $backorders );
+				}
+			}
+
+			return $backorders;
 		}
 
 		public function get_sold_individually( $context = 'view' ) {

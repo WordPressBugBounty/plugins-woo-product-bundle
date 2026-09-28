@@ -284,14 +284,18 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                 return;
             }
 
-            if ( ! empty( $cart_item['woosb_ids'] ) && ( is_a( $cart_item['data'], 'WC_Product_Woosb' ) && ( $cart_item['data']->has_optional() || $cart_item['data']->has_variables() ) ) ) {
-                $edit_url  = apply_filters( 'woosb_cart_item_edit_url', add_query_arg( [
-                        'edit' => base64_encode( $cart_item['woosb_ids'] ),
-                        'key'  => $cart_item_key
-                ], $cart_item['data']->get_permalink() ), $cart_item, $cart_item_key );
-                $edit_link = ' <a class="woosb-cart-item-edit" href="' . esc_url( $edit_url ) . '">' . esc_html( $this->helper->localization( 'cart_item_edit', esc_html__( 'Edit', 'woo-product-bundle' ) ) ) . '</a>';
+            if ( ! empty( $cart_item['woosb_ids'] ) && is_a( $cart_item['data'], 'WC_Product_Woosb' ) ) {
+                $base_product = new WC_Product_Woosb( $cart_item['product_id'] );
 
-                echo apply_filters( 'woosb_cart_item_edit_link', $edit_link, $cart_item, $cart_item_key );
+                if ( $base_product->has_optional() || $base_product->has_variables() ) {
+                    $edit_url  = apply_filters( 'woosb_cart_item_edit_url', add_query_arg( [
+                            'edit' => base64_encode( $cart_item['woosb_ids'] ),
+                            'key'  => $cart_item_key
+                    ], $cart_item['data']->get_permalink() ), $cart_item, $cart_item_key );
+                    $edit_link = ' <a class="woosb-cart-item-edit" href="' . esc_url( $edit_url ) . '">' . esc_html( $this->helper->localization( 'cart_item_edit', esc_html__( 'Edit', 'woo-product-bundle' ) ) ) . '</a>';
+
+                    echo apply_filters( 'woosb_cart_item_edit_link', $edit_link, $cart_item, $cart_item_key );
+                }
             }
         }
 
