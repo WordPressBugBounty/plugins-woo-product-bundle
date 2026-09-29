@@ -100,24 +100,109 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 
 					// get bundle info
 					$fixed_price         = $product->is_fixed_price();
-					$discount_amount     = $product->get_discount_amount();
-					$discount_percentage = $product->get_discount_percentage();
+					$discount_amount     = (float) $product->get_discount_amount();
+					$discount_percentage = (float) $product->get_discount_percentage();
+					$parent_price        = 0;
+					$parent_item         = [
+						'data'       => $product,
+						'product_id' => $product->get_id(),
+						'quantity'   => $quantity,
+					];
 
 					// add the bundle
 					if ( ! $fixed_price ) {
-						if ( $discount_amount ) {
-							$product->set_price( - (float) $discount_amount );
-						} else {
-							$this->helper->set_price( $product, 0 );
-						}
+						$parent_price = (float) apply_filters( 'woosb_parent_item_price_before_set', 0, $parent_item, null );
+						$this->helper->set_price( $product, $parent_price );
 					}
 
 					if ( $order_id = $order->add_product( $product, $quantity ) ) {
 						$order_item = $order->get_item( $order_id );
 						$order_item->update_meta_data( '_woosb_ids', $product->get_ids_str(), true );
-						$order_item->save();
 
-						foreach ( $items as $item ) {
+						if ( ! $fixed_price ) {
+							$child_unit_prices         = [];
+							$child_display_line_totals = [];
+							$child_tax_factors         = [];
+							$display_incl_tax          = ! is_null( WC()->cart ) ? WC()->cart->display_prices_including_tax() : ( get_option( 'woocommerce_tax_display_cart' ) === 'incl' );
+
+							foreach ( $items as $key => $item ) {
+								$_product = wc_get_product( $item['id'] );
+
+								if ( ! $_product || in_array( $_product->get_type(), $this->helper::get_types(), true ) ) {
+									continue;
+								}
+
+								$_price = (float) $this->helper->get_price( $_product );
+
+								// WPC Price by Quantity: apply tier pricing before bundle discount
+								if ( function_exists( 'Wpcpq_Helper' ) ) {
+									$wpcpq_pricing = Wpcpq_Helper()::get_pricing( $item['id'], 'cart' );
+									if ( ! empty( $wpcpq_pricing['method'] ) && ! empty( $wpcpq_pricing['tiers'] ) ) {
+										$_price = (float) Wpcpq_Helper()::get_price( $wpcpq_pricing['method'], $wpcpq_pricing['tiers'], $item['qty'], $_price );
+									}
+								}
+
+								// Apply percentage discount
+								$child_discount = isset( $item['discount'] ) ? (float) $item['discount'] : $discount_percentage;
+								if ( ! empty( $child_discount ) ) {
+									$_price *= ( 100 - $child_discount ) / 100;
+								}
+
+								$_price = $this->helper->round_price( $_price );
+								
+								// Mock cart item structure for filters
+								$item['data']       = $_product;
+								$item['product_id'] = $_product->get_id();
+								$item['quantity']   = $item['qty'];
+								$_price = apply_filters( 'woosb_item_price_before_set', $_price, $item );
+
+								if ( $display_incl_tax ) {
+									$_display_price = wc_get_price_including_tax( $_product, [
+										'price' => $_price,
+										'qty'   => 1,
+									] );
+								} else {
+									$_display_price = wc_get_price_excluding_tax( $_product, [
+										'price' => $_price,
+										'qty'   => 1,
+									] );
+								}
+
+								$tax_factor = ( $_price > 0 && $_display_price > 0 ) ? ( $_display_price / $_price ) : 1.0;
+
+								$child_unit_prices[ $key ]         = $_price;
+								$child_tax_factors[ $key ]         = $tax_factor;
+								$child_display_line_totals[ $key ] = $_display_price * (float) $item['qty'];
+							}
+
+							$discount_amount = apply_filters( 'woosb_cart_item_discount_amount', $discount_amount, $parent_item );
+							$allocations     = [];
+
+							if ( $discount_amount > 0 && ! empty( $child_display_line_totals ) ) {
+								$precision   = function_exists( 'wc_get_price_decimals' ) ? wc_get_price_decimals() : 2;
+								$allocations = WPCleverWoosb_Helper::allocate_discount_proportionally( $discount_amount, $child_display_line_totals, $precision );
+							}
+
+							foreach ( $items as $key => $item ) {
+								if ( ! isset( $child_display_line_totals[ $key ] ) ) {
+									continue;
+								}
+
+								$line_discount      = $allocations[ $key ] ?? 0.0;
+								$orig_display_line  = $child_display_line_totals[ $key ] ?? 0.0;
+								$final_display_line = max( 0.0, $orig_display_line - $line_discount );
+								$final_display_unit = (float) $item['qty'] > 0 ? ( $final_display_line / (float) $item['qty'] ) : 0.0;
+
+								$tax_factor     = $child_tax_factors[ $key ] ?? 1.0;
+								$final_raw_unit = $tax_factor > 0 ? ( $final_display_unit / $tax_factor ) : $final_display_unit;
+
+								$items[ $key ]['final_price'] = $final_raw_unit;
+							}
+						}
+
+						$bundles_display_price = 0;
+
+						foreach ( $items as $key => $item ) {
 							$_product = wc_get_product( $item['id'] );
 
 							if ( ! $_product || in_array( $_product->get_type(), $this->helper::get_types(), true ) ) {
@@ -126,10 +211,23 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 
 							if ( $fixed_price ) {
 								$this->helper->set_price( $_product, 0 );
-							} elseif ( $discount_percentage ) {
-								$_price = (float) ( 100 - $discount_percentage ) * $this->helper->get_price( $_product ) / 100;
-								$_price = apply_filters( 'woosb_product_price_before_set', $_price, $_product );
-								$_product->set_price( $_price );
+							} else {
+								$_product->set_price( $items[ $key ]['final_price'] ?? 0 );
+							}
+
+							if ( ! $fixed_price ) {
+								if ( $display_incl_tax ) {
+									$_child_display = wc_get_price_including_tax( $_product, [
+										'price' => $_product->get_price(),
+										'qty'   => $item['qty'],
+									] );
+								} else {
+									$_child_display = wc_get_price_excluding_tax( $_product, [
+										'price' => $_product->get_price(),
+										'qty'   => $item['qty'],
+									] );
+								}
+								$bundles_display_price += $this->helper->round_price( $_child_display );
 							}
 
 							// add bundled products
@@ -143,6 +241,28 @@ if ( ! class_exists( 'WPCleverWoosb_Compatible' ) ) {
 							$_order_item->update_meta_data( '_woosb_parent_id', $product_id, true );
 							$_order_item->save();
 						}
+
+						if ( ! $fixed_price ) {
+							if ( $parent_price > 0 ) {
+								if ( $display_incl_tax ) {
+									$_parent_display = wc_get_price_including_tax( $product, [
+										'price' => $parent_price,
+										'qty'   => 1,
+									] );
+								} else {
+									$_parent_display = wc_get_price_excluding_tax( $product, [
+										'price' => $parent_price,
+										'qty'   => 1,
+									] );
+								}
+								$bundles_display_price += $this->helper->round_price( $_parent_display );
+							}
+
+							$bundles_display_price = apply_filters( 'woosb_bundles_display_price', $bundles_display_price, $parent_item );
+							$order_item->update_meta_data( '_woosb_price', $this->helper->round_price( $bundles_display_price ) );
+						}
+
+						$order_item->save();
 
 						// remove the old bundle
 						$order->remove_item( $item_id );
