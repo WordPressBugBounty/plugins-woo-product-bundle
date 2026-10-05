@@ -263,8 +263,175 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 			return 0;
 		}
 
+		/**
+		 * Normalize bundle ids received from user input (request, session, order meta).
+		 * The result is rebuilt from whitelisted components only, so markup or any
+		 * other arbitrary data can never be persisted in cart/order data.
+		 *
+		 * @param string|array $ids
+		 *
+		 * @return string|array
+		 */
 		public static function clean_ids( $ids ) {
+			if ( is_array( $ids ) ) {
+				$ids = self::clean_ids_array( $ids );
+			} elseif ( is_scalar( $ids ) ) {
+				$ids = self::clean_ids_string( (string) $ids );
+			} else {
+				$ids = '';
+			}
+
 			return apply_filters( 'woosb_clean_ids', $ids );
+		}
+
+		/**
+		 * Clean a SKU, only keep safe characters.
+		 */
+		protected static function clean_ids_sku( $sku ) {
+			$sku = sanitize_text_field( (string) $sku );
+			$sku = preg_replace( '/[^\p{L}\p{N}\s_.\-+#@:()\[\]]/u', '', $sku );
+
+			return trim( (string) $sku );
+		}
+
+		/**
+		 * Clean a numeric value (quantity, min, max), always returns a finite float.
+		 */
+		protected static function clean_ids_number( $number ) {
+			$number = is_scalar( $number ) ? (float) $number : 0.0;
+
+			return is_finite( $number ) ? max( 0.0, $number ) : 0.0;
+		}
+
+		/**
+		 * Clean variation attributes, only scalar values are allowed.
+		 */
+		protected static function clean_ids_attrs( $attrs ) {
+			$clean = [];
+
+			if ( ! is_array( $attrs ) ) {
+				return $clean;
+			}
+
+			foreach ( $attrs as $name => $value ) {
+				$name = preg_replace( '/[^\p{L}\p{N}_\-%]/u', '', (string) $name );
+
+				if ( $name === '' || ! is_scalar( $value ) ) {
+					continue;
+				}
+
+				$clean[ $name ] = sanitize_text_field( (string) $value );
+			}
+
+			return $clean;
+		}
+
+		/**
+		 * Normalize ids in string format: id/key/qty/attrs,id/key/qty/attrs
+		 */
+		protected static function clean_ids_string( $ids_str ) {
+			$clean = [];
+
+			foreach ( explode( ',', $ids_str ) as $raw ) {
+				$raw = trim( $raw );
+
+				if ( $raw === '' ) {
+					continue;
+				}
+
+				$data = explode( '/', $raw );
+				$id   = rawurldecode( $data[0] );
+
+				if ( ctype_digit( $id ) ) {
+					$id = (string) absint( $id );
+
+					if ( $id === '0' ) {
+						continue;
+					}
+				} else {
+					// SKU
+					$id = self::clean_ids_sku( $id );
+
+					if ( $id === '' || is_numeric( $id ) ) {
+						continue;
+					}
+
+					$id = rawurlencode( $id );
+				}
+
+				if ( ! isset( $data[1] ) ) {
+					$clean[] = $id;
+					continue;
+				}
+
+				if ( is_numeric( $data[1] ) && ! isset( $data[2] ) ) {
+					// legacy format: id/qty
+					$clean[] = $id . '/' . self::clean_ids_number( $data[1] );
+					continue;
+				}
+
+				$key = preg_replace( '/[^A-Za-z0-9_\-]/', '', $data[1] );
+				$key = $key !== '' ? $key : self::generate_key();
+				$qty = self::clean_ids_number( $data[2] ?? 1 );
+
+				$attrs = '';
+
+				if ( ! empty( $data[3] ) ) {
+					$attrs = self::clean_ids_attrs( json_decode( rawurldecode( $data[3] ), true ) );
+					$attrs = ! empty( $attrs ) ? rawurlencode( wp_json_encode( $attrs ) ) : '';
+				}
+
+				$clean[] = $id . '/' . $key . '/' . $qty . '/' . $attrs;
+			}
+
+			return implode( ',', $clean );
+		}
+
+		/**
+		 * Normalize ids in array format (v7.0+).
+		 */
+		protected static function clean_ids_array( $ids_arr ) {
+			$clean = [];
+
+			foreach ( $ids_arr as $key => $item ) {
+				if ( ! is_array( $item ) ) {
+					continue;
+				}
+
+				$key       = is_int( $key ) ? $key : preg_replace( '/[^A-Za-z0-9_\-]/', '', (string) $key );
+				$clean_row = [];
+
+				foreach ( $item as $field => $value ) {
+					$field = preg_replace( '/[^A-Za-z0-9_\-]/', '', (string) $field );
+
+					switch ( $field ) {
+						case 'id':
+							$clean_row['id'] = absint( $value );
+							break;
+						case 'sku':
+							$clean_row['sku'] = self::clean_ids_sku( is_scalar( $value ) ? $value : '' );
+							break;
+						case 'qty':
+							$clean_row['qty'] = self::clean_ids_number( $value );
+							break;
+						case 'min':
+						case 'max':
+							$clean_row[ $field ] = ( $value === '' || $value === null ) ? '' : self::clean_ids_number( $value );
+							break;
+						case 'attrs':
+							$clean_row['attrs'] = self::clean_ids_attrs( $value );
+							break;
+						default:
+							if ( $field !== '' ) {
+								$clean_row[ $field ] = self::clean( $value );
+							}
+					}
+				}
+
+				$clean[ $key ] = $clean_row;
+			}
+
+			return $clean;
 		}
 
 		public static function clean( $var ) {

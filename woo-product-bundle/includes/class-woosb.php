@@ -1225,7 +1225,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
             if ( isset( $values['woosb_ids'] ) ) {
                 // use _ to hide the data
-                $order_item->update_meta_data( '_woosb_ids', $values['woosb_ids'] );
+                $order_item->update_meta_data( '_woosb_ids', $this->helper->clean_ids( $values['woosb_ids'] ) );
             }
 
             if ( isset( $values['woosb_price'] ) ) {
