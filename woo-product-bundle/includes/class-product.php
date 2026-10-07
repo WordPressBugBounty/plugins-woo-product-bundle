@@ -501,7 +501,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 			 */
 			$product_id = $this->get_id();
 
-			if ( $status !== $parent_status && ! isset( self::$_persisting_stock[ $product_id ] ) ) {
+			if ( (string) $status !== (string) $parent_status && ! isset( self::$_persisting_stock[ $product_id ] ) ) {
 				self::$_persisting_stock[ $product_id ] = true;
 
 				try {
@@ -552,12 +552,12 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 			/*
 			 * Persist the computed quantity only when it has drifted from the stored
-			 * value and we are not already mid-persist for this product.
+			 * value, and we are not already mid-persist for this product.
 			 * Direct update_post_meta() is used to avoid firing product-save hooks
 			 * (same rationale as get_stock_status()).
 			 */
 			if (
-				$target_quantity !== $parent_quantity
+				(string) $target_quantity !== (string) $parent_quantity
 				&& ! isset( self::$_persisting_stock[ $product_id ] )
 				&& ! self::is_inventory_disabled()
 				&& apply_filters( 'woosb_update_stock', true, 'stock_quantity' )
@@ -566,20 +566,6 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 
 				try {
 					update_post_meta( $product_id, '_stock', $target_quantity );
-				} finally {
-					unset( self::$_persisting_stock[ $product_id ] );
-				}
-			} elseif (
-				! $data['computed']
-				&& ! isset( self::$_persisting_stock[ $product_id ] )
-				&& ! self::is_inventory_disabled()
-				&& apply_filters( 'woosb_update_stock', true, 'stock_quantity' )
-			) {
-				// Guards were triggered (no computable items): keep _stock in sync.
-				self::$_persisting_stock[ $product_id ] = true;
-
-				try {
-					update_post_meta( $product_id, '_stock', $parent_quantity );
 				} finally {
 					unset( self::$_persisting_stock[ $product_id ] );
 				}
