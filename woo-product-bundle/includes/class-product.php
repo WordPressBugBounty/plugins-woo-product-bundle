@@ -297,7 +297,7 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 					continue;
 				}
 
-				$is_purchasable = $product->is_purchasable();
+				$is_purchasable = $this->helper->is_purchasable( $product, 'stock' );
 				$is_in_stock    = $this->helper->is_in_stock( $product );
 
 				if ( $exclude_unpurchasable && ( ! $is_purchasable || ! $is_in_stock ) ) {

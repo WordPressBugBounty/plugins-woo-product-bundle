@@ -21,6 +21,7 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 		protected static $bundles_cache = [];
 		protected static $bundled_cache = [];
 		protected static ?bool $_check_variations_stock = null;
+		protected static int $bundled_context_depth = 0;
 
 		public static function instance(): self {
 			if ( is_null( self::$instance ) ) {
@@ -186,6 +187,56 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 			}
 
 			return self::$_check_variations_stock;
+		}
+
+		/**
+		 * Mark the beginning of a bundled-item context (nestable).
+		 */
+		public static function start_bundled_context(): void {
+			self::$bundled_context_depth ++;
+		}
+
+		/**
+		 * Mark the end of a bundled-item context.
+		 */
+		public static function end_bundled_context(): void {
+			self::$bundled_context_depth = max( 0, self::$bundled_context_depth - 1 );
+		}
+
+		/**
+		 * Whether a product is currently being evaluated as a bundled item.
+		 *
+		 * @return bool
+		 */
+		public static function is_bundled_context(): bool {
+			return (bool) apply_filters( 'woosb_is_bundled_context', self::$bundled_context_depth > 0 );
+		}
+
+		/**
+		 * Check if a bundled product is purchasable, evaluated inside the bundled context.
+		 *
+		 * Plugins that force products to be unpurchasable (e.g. password protection)
+		 * can use is_bundled_context() or the filters below to keep them purchasable within a bundle.
+		 *
+		 * @param WC_Product $product Bundled product.
+		 * @param string     $context Where the check happens (e.g. validation, add_to_cart, display, price).
+		 *
+		 * @return bool
+		 */
+		public static function is_purchasable( $product, $context = '' ): bool {
+			if ( ! is_a( $product, 'WC_Product' ) ) {
+				return false;
+			}
+
+			self::start_bundled_context();
+
+			try {
+				$purchasable = (bool) $product->is_purchasable();
+			} finally {
+				self::end_bundled_context();
+			}
+
+			return (bool) apply_filters( 'woosb_bundled_is_purchasable', $purchasable, $product, $context );
 		}
 
 		public static function is_in_stock( $product ) {
@@ -510,6 +561,101 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 			}
 
 			return apply_filters( 'woosb_generate_key', $key );
+		}
+
+		/**
+		 * Get the stable bundle_id of a cart item (parent or child).
+		 * It does not depend on cart item keys, which can change (e.g. WPML/WCML re-keying).
+		 *
+		 * @param array $cart_item Cart item data.
+		 *
+		 * @return string
+		 */
+		public static function get_bundle_id( $cart_item ): string {
+			if ( ! is_array( $cart_item ) ) {
+				return '';
+			}
+
+			if ( ! empty( $cart_item['woosb_bundle']['bundle_id'] ) ) {
+				return (string) $cart_item['woosb_bundle']['bundle_id'];
+			}
+
+			if ( ! empty( $cart_item['woosb_group_key'] ) ) {
+				return 'woosb_' . $cart_item['woosb_group_key'];
+			}
+
+			return '';
+		}
+
+		/**
+		 * Check whether a cart item is a bundle parent.
+		 *
+		 * @param array $cart_item Cart item data.
+		 *
+		 * @return bool
+		 */
+		public static function is_bundle_parent( $cart_item ): bool {
+			return is_array( $cart_item ) && ( ! empty( $cart_item['woosb_ids'] ) || ( ( $cart_item['woosb_bundle']['role'] ?? '' ) === 'parent' ) );
+		}
+
+		/**
+		 * Check whether a cart item is a bundled (child) item.
+		 *
+		 * @param array $cart_item Cart item data.
+		 *
+		 * @return bool
+		 */
+		public static function is_bundle_child( $cart_item ): bool {
+			return is_array( $cart_item ) && ! self::is_bundle_parent( $cart_item ) && ( ! empty( $cart_item['woosb_parent_key'] ) || ! empty( $cart_item['woosb_parent_id'] ) || ( ( $cart_item['woosb_bundle']['role'] ?? '' ) === 'child' ) );
+		}
+
+		/**
+		 * Get cart item keys that belong to a bundle.
+		 *
+		 * @param array  $cart_contents Cart contents.
+		 * @param string $bundle_id     Bundle ID.
+		 * @param string $role          Optional role filter: 'parent' or 'child'.
+		 *
+		 * @return array
+		 */
+		public static function get_bundle_cart_keys( $cart_contents, $bundle_id, $role = '' ): array {
+			$keys = [];
+
+			if ( empty( $bundle_id ) || ! is_array( $cart_contents ) ) {
+				return $keys;
+			}
+
+			foreach ( $cart_contents as $key => $item ) {
+				if ( self::get_bundle_id( $item ) !== $bundle_id ) {
+					continue;
+				}
+
+				if ( $role === 'parent' && ! self::is_bundle_parent( $item ) ) {
+					continue;
+				}
+
+				if ( $role === 'child' && ! self::is_bundle_child( $item ) ) {
+					continue;
+				}
+
+				$keys[] = $key;
+			}
+
+			return $keys;
+		}
+
+		/**
+		 * Get the cart item key of the parent of a bundle.
+		 *
+		 * @param array  $cart_contents Cart contents.
+		 * @param string $bundle_id     Bundle ID.
+		 *
+		 * @return string|null
+		 */
+		public static function get_bundle_parent_key( $cart_contents, $bundle_id ) {
+			$keys = self::get_bundle_cart_keys( $cart_contents, $bundle_id, 'parent' );
+
+			return $keys[0] ?? null;
 		}
 
 		public static function data_attributes( $attrs ) {
