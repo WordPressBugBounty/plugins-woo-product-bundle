@@ -588,9 +588,9 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                 if ( ! empty( $ids ) ) {
                     $cart_item_data['woosb_ids'] = $ids;
 
-                    // Ensure unique group key for bundle instance
+                    // Deterministic group key: identical bundles (same product + same items) share the same key so they get merged in the cart
                     if ( empty( $cart_item_data['woosb_group_key'] ) ) {
-                        $cart_item_data['woosb_group_key'] = md5( uniqid( (string) $product_id, true ) );
+                        $cart_item_data['woosb_group_key'] = $this->get_group_key( $product_id, $ids );
                     }
 
                     // Structured bundle context
@@ -605,6 +605,17 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             }
 
             return $cart_item_data;
+        }
+
+        function get_group_key( $product_id, $ids ) {
+            // return true to make every added bundle unique (never merged), false to merge identical bundles
+            if ( apply_filters( 'woosb_unique_group_key', false, $product_id, $ids ) ) {
+                $group_key = md5( uniqid( (string) $product_id, true ) );
+            } else {
+                $group_key = md5( 'woosb|' . $product_id . '|' . ( is_scalar( $ids ) ? (string) $ids : wp_json_encode( $ids ) ) );
+            }
+
+            return apply_filters( 'woosb_group_key', $group_key, $product_id, $ids );
         }
 
         function add_to_cart( $cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data ) {
@@ -655,7 +666,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             $exclude_unpurchasable = WC()->cart->cart_contents[ $cart_item_key ]['data']->exclude_unpurchasable();
 
             // Save the current key associated with woosb_parent_key
-            $group_key            = WC()->cart->cart_contents[ $cart_item_key ]['woosb_group_key'] ?? ( WC()->cart->cart_contents[ $cart_item_key ]['woosb_group_key'] = md5( uniqid( (string) $product_id, true ) ) );
+            $group_key            = WC()->cart->cart_contents[ $cart_item_key ]['woosb_group_key'] ?? ( WC()->cart->cart_contents[ $cart_item_key ]['woosb_group_key'] = $this->get_group_key( $product_id, WC()->cart->cart_contents[ $cart_item_key ]['woosb_ids'] ?? $cart_item_key ) );
             $bundle_id            = WC()->cart->cart_contents[ $cart_item_key ]['woosb_bundle']['bundle_id'] ?? ( 'woosb_' . $group_key );
             $base_discount_amount = (float) WC()->cart->cart_contents[ $cart_item_key ]['data']->get_meta( 'woosb_discount_amount' );
 
