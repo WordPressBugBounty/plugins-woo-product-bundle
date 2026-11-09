@@ -7,6 +7,9 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
         protected static $instance = null;
         protected $helper = null;
 
+        // True only while WooCommerce is re-adding the items of a previous order ("Order again")
+        protected $is_order_again = false;
+
         public static function instance() {
             if ( is_null( self::$instance ) ) {
                 self::$instance = new self();
@@ -134,6 +137,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
             // Order again
             add_filter( 'woocommerce_order_again_cart_item_data', [ $this, 'order_again_cart_item_data' ], 10, 2 );
+            add_action( 'woocommerce_ordered_again', [ $this, 'ordered_again' ] );
             add_action( 'woocommerce_cart_loaded_from_session', [ $this, 'cart_loaded_from_session' ] );
 
             // Coupons
@@ -362,7 +366,8 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
         }
 
         function add_to_cart_validation( $passed, $product_id, $qty ) {
-            if ( ! apply_filters( 'woosb_add_to_cart_validation', true ) || isset( $_REQUEST['order_again'] ) ) {
+            // Never trust the "order_again" request parameter, it can be sent by anyone. Only skip when WooCommerce is really re-adding an old order.
+            if ( ! apply_filters( 'woosb_add_to_cart_validation', true ) || $this->is_order_again ) {
                 return $passed;
             }
 
@@ -375,9 +380,20 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                 $ori_items = $product->get_items();
                 $ori_ids   = array_filter( array_column( $ori_items, 'id' ) );
 
+                // validate the same request source that add_cart_item_data() reads, otherwise it can be used to bypass the validation
+                $submitted_ids  = null;
+                $custom_request = apply_filters( 'woosb_custom_request_data', 'data' );
+
+                if ( ! empty( $custom_request ) && ! empty( $_REQUEST[ $custom_request ]['woosb_ids'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                    $submitted_ids = $this->helper->clean_ids( wp_unslash( $_REQUEST[ $custom_request ]['woosb_ids'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                }
+
                 if ( isset( $_REQUEST['woosb_ids'] ) ) {
-                    $ids = $this->helper->clean_ids( wp_unslash( $_REQUEST['woosb_ids'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-                    $product->build_items( $ids );
+                    $submitted_ids = $this->helper->clean_ids( wp_unslash( $_REQUEST['woosb_ids'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                }
+
+                if ( $submitted_ids !== null ) {
+                    $product->build_items( $submitted_ids );
                 }
 
                 if ( ( $items = $product->get_items() ) && ! empty( $items ) ) {
@@ -503,6 +519,13 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         }
 
                         $purchasable ++;
+                    }
+
+                    // a bundle must contain at least one bundled product with a quantity greater than 0
+                    if ( $count <= 0 ) {
+                        wc_add_notice( esc_html__( 'You cannot add this bundle to the cart.', 'woo-product-bundle' ), 'error' );
+
+                        return false;
                     }
 
                     if ( ! $purchasable || ( $purchasable > count( $ori_ids ) ) ) {
@@ -690,6 +713,8 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             if ( is_array( $items ) && ( count( $items ) > 0 ) ) {
                 do_action( 'woosb_before_add_to_cart_items', $items, $cart_item_key, $product_id, $quantity );
 
+                $added_count = 0;
+
                 foreach ( $items as $item ) {
                     $_id           = $item['id'];
                     $_qty          = $item['qty'];
@@ -770,12 +795,21 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         }
                     } elseif ( ! isset( WC()->cart->cart_contents[ $cart_item_key ]['woosb_keys'] ) || ! in_array( $_key, WC()->cart->cart_contents[ $cart_item_key ]['woosb_keys'], true ) ) {
                         // save the current key
+                        $added_count ++;
                         WC()->cart->cart_contents[ $_key ]['woosb_key'] = $_key;
 
                         // add keys for parent
                         WC()->cart->cart_contents[ $cart_item_key ]['woosb_keys'][] = $_key;
                     }
                 } // end foreach
+
+                // a bundle without any bundled products (e.g. all quantities are 0) must not stay in the cart
+                if ( ! $added_count && isset( WC()->cart->cart_contents[ $cart_item_key ] ) && apply_filters( 'woosb_remove_empty_bundle', true, $cart_item_key ) ) {
+                    WC()->cart->remove_cart_item( $cart_item_key );
+                    wc_add_notice( esc_html__( 'You cannot add this bundle to the cart.', 'woo-product-bundle' ), 'error' );
+
+                    return;
+                }
 
                 do_action( 'woosb_after_add_to_cart_items', $items, $cart_item_key, $product_id, $quantity );
             }
@@ -1694,7 +1728,14 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             return apply_filters( 'woosb_get_price_html', $price_html, $product );
         }
 
+        function ordered_again() {
+            $this->is_order_again = false;
+        }
+
         function order_again_cart_item_data( $data, $item ) {
+            // WooCommerce runs this filter right before validating and adding each item of the old order
+            $this->is_order_again = true;
+
             if ( $ids = $item->get_meta( '_woosb_ids' ) ) {
                 $data['woosb_order_again'] = 'yes';
                 $data['woosb_ids']         = $ids;
@@ -1907,9 +1948,9 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
             $sale_price          = '';
 
             if ( $discount_amount || $discount_percentage ) {
-                $sale_price_calc = 0.0;
+                $lines = [];
 
-                foreach ( $items as $item ) {
+                foreach ( $items as $key => $item ) {
                     if ( empty( $item['id'] ) ) {
                         continue;
                     }
@@ -1920,16 +1961,12 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         continue;
                     }
 
-                    $_price = (float) $this->helper->get_price( $_product ) * (float) $item['qty'];
-
-                    if ( $discount_percentage ) {
-                        $sale_price_calc += $this->helper->round_price( $_price * ( 100 - $discount_percentage ) / 100 );
-                    } else {
-                        $sale_price_calc += $_price;
-                    }
+                    $lines[ $key ] = [ 'product' => $_product, 'qty' => $item['qty'] ];
                 }
 
-                $sale_price = $discount_amount ? ( $sale_price_calc - $discount_amount ) : $sale_price_calc;
+                // The fixed discount amount is applied on the displayed price (same as the product page and the cart),
+                // then converted back to the raw price basis (tax-exclusive when prices are entered excluding tax)
+                $sale_price = $this->helper->calculate_sale_price( $lines, $discount_amount, $discount_percentage );
             }
 
             // Determine the active price (sale price takes priority if available)

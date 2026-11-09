@@ -113,6 +113,70 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 		}
 
 		/**
+		 * Calculate the tax-agnostic (stored) sale price of an auto-priced bundle.
+		 *
+		 * The fixed discount amount is entered as a displayed price (the same way it is applied in the product page and the cart),
+		 * so it is applied on the displayed (shop tax display) line totals, allocated proportionally, then converted back
+		 * to the raw price basis used by WooCommerce (tax-exclusive when prices are entered excluding tax).
+		 *
+		 * @param array<int|string, array{product: WC_Product, qty: float|int|string}> $lines Bundled lines.
+		 * @param float|string $discount_amount Fixed discount amount (displayed price).
+		 * @param float|string $discount_percentage Discount percentage.
+		 *
+		 * @return float
+		 */
+		public static function calculate_sale_price( $lines, $discount_amount = 0, $discount_percentage = 0 ) {
+			$discount_amount     = (float) $discount_amount;
+			$discount_percentage = (float) $discount_percentage;
+			$raw_lines           = [];
+			$display_lines       = [];
+
+			foreach ( $lines as $key => $line ) {
+				$_product = $line['product'] ?? null;
+
+				if ( ! $_product ) {
+					continue;
+				}
+
+				$_qty  = (float) ( $line['qty'] ?? 1 );
+				$_line = self::get_price( $_product ) * $_qty;
+
+				if ( $discount_percentage ) {
+					$_line = self::round_price( $_line * ( 100 - $discount_percentage ) / 100 );
+				}
+
+				$raw_lines[ $key ] = $_line;
+
+				if ( $discount_amount > 0 ) {
+					$display_lines[ $key ] = (float) wc_get_price_to_display( $_product, [
+						'price' => $_qty > 0 ? ( $_line / $_qty ) : 0,
+						'qty'   => $_qty,
+					] );
+				}
+			}
+
+			if ( $discount_amount <= 0 ) {
+				return (float) array_sum( $raw_lines );
+			}
+
+			$allocations = self::allocate_discount_proportionally( $discount_amount, $display_lines );
+			$sale_price  = 0.0;
+
+			foreach ( $raw_lines as $key => $_line ) {
+				$_display = $display_lines[ $key ] ?? 0.0;
+
+				if ( $_line > 0 && $_display > 0 ) {
+					// Convert the discounted displayed amount back to the raw price basis
+					$sale_price += max( 0.0, $_display - ( $allocations[ $key ] ?? 0.0 ) ) / ( $_display / $_line );
+				} else {
+					$sale_price += max( 0.0, $_line - ( $allocations[ $key ] ?? 0.0 ) );
+				}
+			}
+
+			return (float) self::round_price( $sale_price );
+		}
+
+		/**
 		 * Allocate a total discount amount across items proportionally using Largest Remainder Method (Hare-Niemeyer).
 		 * Ensures sum(allocated_discounts) == total_discount down to the last penny without rounding errors.
 		 *

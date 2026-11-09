@@ -408,26 +408,44 @@
         if ($('#product-type').val() == 'woosb') {
             var total = 0;
             var total_max = 0;
-            var total_sale = $('#woosb_discount_amount').val() ? -parseFloat($('#woosb_discount_amount').val()) : 0;
+            var total_raw = 0;
+            var total_sale_raw = 0;
+            var discount_amount = $('#woosb_discount_amount').val() ? parseFloat($('#woosb_discount_amount').val()) : 0;
+            var total_sale = -discount_amount;
             var discount_percentage = !$('#woosb_discount_amount').val() && $('#woosb_discount').val() ? parseFloat($('#woosb_discount').val()) : 0;
 
             $('#woosb_selected .woosb-li-product').each(function () {
                 var li_qty = parseFloat($(this).find('.qty input').val() ? $(this).find('.qty input').val() : 1);
                 var li_price = parseFloat($(this).data('price'));
                 var li_price_max = parseFloat($(this).data('price-max'));
+                // raw price is the price in the same basis as the WooCommerce price fields (e.g. excluding tax)
+                var li_price_raw = parseFloat($(this).data('price-raw'));
+
+                if (isNaN(li_price_raw)) {
+                    li_price_raw = li_price;
+                }
 
                 total += li_price * li_qty;
                 total_max += li_price_max * li_qty;
+                total_raw += li_price_raw * li_qty;
 
                 if (woosb_vars.round_price) {
                     total_sale += parseFloat((li_price * (100 - discount_percentage) / 100).toFixed(parseInt(woosb_vars.price_decimals))) * li_qty;
+                    total_sale_raw += parseFloat((li_price_raw * (100 - discount_percentage) / 100).toFixed(parseInt(woosb_vars.price_decimals))) * li_qty;
                 } else {
                     total_sale += li_price * li_qty;
+                    total_sale_raw += li_price_raw * li_qty;
                 }
             });
 
             if (!woosb_vars.round_price) {
                 total_sale = parseFloat(total_sale * (100 - discount_percentage) / 100).toFixed(parseInt(woosb_vars.price_decimals));
+                total_sale_raw = parseFloat(total_sale_raw * (100 - discount_percentage) / 100);
+            }
+
+            // the fixed discount amount is applied on the displayed price, then converted to the raw price basis
+            if (discount_amount > 0 && total > 0) {
+                total_sale_raw = total_sale_raw * Math.max(0, total - discount_amount) / total;
             }
 
             if (total == total_max) {
@@ -437,10 +455,10 @@
             }
 
             if (!$('#woosb_disable_auto_price').is(':checked')) {
-                $('#_regular_price').prop('readonly', true).val(woosb_format_money(total, woosb_vars.price_decimals, '', woosb_vars.price_thousand_separator, woosb_vars.price_decimal_separator)).trigger('change');
+                $('#_regular_price').prop('readonly', true).val(woosb_format_money(total_raw, woosb_vars.price_decimals, '', woosb_vars.price_thousand_separator, woosb_vars.price_decimal_separator)).trigger('change');
 
                 if (total_sale < total) {
-                    $('#_sale_price').prop('readonly', true).val(woosb_format_money(total_sale, woosb_vars.price_decimals, '', woosb_vars.price_thousand_separator, woosb_vars.price_decimal_separator)).trigger('change');
+                    $('#_sale_price').prop('readonly', true).val(woosb_format_money(total_sale_raw, woosb_vars.price_decimals, '', woosb_vars.price_thousand_separator, woosb_vars.price_decimal_separator)).trigger('change');
                 } else {
                     $('#_sale_price').prop('readonly', true).val('').trigger('change');
                 }

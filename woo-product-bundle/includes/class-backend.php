@@ -1758,8 +1758,10 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                     'name'      => $product_name,
                     'sku'       => $product_sku,
                     'id'        => $product_id,
-                    'price'     => $price,
-                    'price-max' => $price_max,
+                    'price'         => $price,
+                    'price-max'     => $price_max,
+                    'price-raw'     => $this->helper->round_price( $this->helper->get_price( $product ) ),
+                    'price-max-raw' => $this->helper->round_price( $this->helper->get_price( $product, 'max' ) ),
             ], $product );
 
             echo '<div class="' . esc_attr( $product_class ) . '" ' . $this->helper->data_attributes( $product_attrs ) . '>';
@@ -1899,6 +1901,24 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
 
             if ( isset( $_POST['woosb_after_text'] ) ) {
                 update_post_meta( $post_id, 'woosb_after_text', sanitize_post_field( 'post_content', wp_unslash( $_POST['woosb_after_text'] ?? '' ), $post_id, 'display' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+            }
+
+            // Sync the stored bundle prices (_regular_price, _sale_price, _price) for auto-priced bundles.
+            // The admin price fields are filled by JS, so always store prices in the raw basis (same as the cart).
+            if ( ! isset( $_POST['woosb_disable_auto_price'] ) && apply_filters( 'woosb_auto_update_bundle_price', true ) ) {
+                $bundle = wc_get_product( $post_id );
+
+                if ( $bundle && $bundle->is_type( 'woosb' ) && ! $bundle->is_fixed_price() ) {
+                    WPCleverWoosb()->recalculate_bundle_price( $bundle );
+
+                    // Refresh the product lookup table which has been written before the prices were synced
+                    try {
+                        $data_store = WC_Data_Store::load( 'product' );
+                        $data_store->update_lookup_table( $post_id, 'wc_product_meta_lookup' );
+                    } catch ( Throwable $e ) {
+                        // Lookup table will be refreshed by WooCommerce on the next product update
+                    }
+                }
             }
         }
 

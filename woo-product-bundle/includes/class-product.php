@@ -154,15 +154,15 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 				return '';
 			}
 
-			$sale_price = 0;
+			$lines = [];
 
 			// Check items existence early
 			if ( empty( $this->items ) ) {
-				return $sale_price;
+				return 0;
 			}
 
 			// Process items
-			foreach ( $this->items as $item ) {
+			foreach ( $this->items as $key => $item ) {
 				// Get cached product object
 				$_product = $this->get_bundled_product_object( $item['id'] );
 
@@ -171,19 +171,11 @@ if ( ! class_exists( 'WC_Product_Woosb' ) && class_exists( 'WC_Product' ) ) {
 					continue;
 				}
 
-				// Calculate item price
-				$_price = (float) $this->helper->get_price( $_product ) * (float) $item['qty'];
-
-				// Apply discount percentage if applicable
-				if ( $discount_percentage ) {
-					$sale_price += $this->helper->round_price( $_price * ( 100 - $discount_percentage ) / 100 );
-				} else {
-					$sale_price += $_price;
-				}
+				$lines[ $key ] = [ 'product' => $_product, 'qty' => $item['qty'] ];
 			}
 
-			// Apply a fixed discount amount if applicable
-			return $discount_amount ? ( $sale_price - $discount_amount ) : $sale_price;
+			// The fixed discount amount is applied on the displayed price (same as the product page and the cart)
+			return $this->helper->calculate_sale_price( $lines, $discount_amount, $discount_percentage );
 		}
 
 		public function get_price( $context = 'view' ) {
