@@ -187,6 +187,10 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                             'currency_symbol'             => get_woocommerce_currency_symbol(),
                             'trim_zeros'                  => apply_filters( 'woosb_price_trim_zeros', apply_filters( 'woocommerce_price_trim_zeros', false ) ),
                             'round_price'                 => apply_filters( 'woosb_round_price', ! apply_filters( 'woosb_ignore_round_price', false ) ),
+                            'round_mode'                  => WPCleverWoosb_Helper::get_round_mode(),
+                            'round_decimals'              => WPCleverWoosb_Helper::get_round_decimals(),
+                            'discount_decimals'           => WPCleverWoosb_Helper::get_discount_decimals(),
+                            'discount_round_mode'         => WPCleverWoosb_Helper::get_discount_round_mode(),
                             'recalc_price'                => apply_filters( 'woosb_recalc_price', false ),
                             'change_image'                => $this->helper->get_setting( 'change_image', 'yes' ),
                             'bundled_price'               => $this->helper->get_setting( 'bundled_price', 'price' ),
@@ -459,7 +463,8 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                             $_min = ! empty( $ori_items[ $key ]['min'] ) ? (float) $ori_items[ $key ]['min'] : 0;
                             $_max = ! empty( $ori_items[ $key ]['max'] ) ? (float) $ori_items[ $key ]['max'] : 10000;
 
-                            if ( $_qty < $_min || $_qty > $_max ) {
+                            // wc_stock_amount() keeps decimals only when decimal quantities are enabled (e.g. by WPC Product Quantity)
+                            if ( (float) wc_stock_amount( $_qty ) !== (float) $_qty || $_qty < $_min || $_qty > $_max ) {
                                 wc_add_notice( esc_html__( 'You cannot add this bundle to the cart.', 'woo-product-bundle' ), 'error' );
 
                                 return false;
@@ -567,7 +572,11 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         if ( $discount_amount = $product->get_discount_amount() ) {
                             $total -= $discount_amount;
                         } elseif ( $discount_percentage = $product->get_discount_percentage() ) {
-                            $total = $total * ( 100 - $discount_percentage ) / 100;
+                            if ( WPCleverWoosb_Helper::is_round_discount() ) {
+                                $total -= WPCleverWoosb_Helper::round_discount( $total * $discount_percentage / 100 );
+                            } else {
+                                $total = $total * ( 100 - $discount_percentage ) / 100;
+                            }
                         }
 
                         if ( $total_min > 0 && $total < $total_min ) {
@@ -779,6 +788,11 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                     do_action( 'woosb_after_add_to_cart_item', $_key, $item, $cart_item_key, $product_id, $quantity, $_data );
 
+                    if ( ! empty( $_key ) ) {
+                        // count every bundled product that has been added, even if another process (e.g. WPML cart sync) has already linked its key to the parent
+                        $added_count ++;
+                    }
+
                     if ( empty( $_key ) ) {
                         if ( ! $exclude_unpurchasable ) {
                             // can't add the bundled product
@@ -795,7 +809,6 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         }
                     } elseif ( ! isset( WC()->cart->cart_contents[ $cart_item_key ]['woosb_keys'] ) || ! in_array( $_key, WC()->cart->cart_contents[ $cart_item_key ]['woosb_keys'], true ) ) {
                         // save the current key
-                        $added_count ++;
                         WC()->cart->cart_contents[ $_key ]['woosb_key'] = $_key;
 
                         // add keys for parent
@@ -1005,6 +1018,8 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                     $child_display_line_totals = [];
                     $child_tax_factors         = [];
                     $display_incl_tax          = ! is_null( WC()->cart ) ? WC()->cart->display_prices_including_tax() : ( get_option( 'woocommerce_tax_display_cart' ) === 'incl' );
+                    $round_discount = WPCleverWoosb_Helper::is_round_discount(); // percentage discount => rounded discount amount of the whole bundle
+                    $pct_discount   = 0.0;
 
                     foreach ( $child_keys as $child_key ) {
                         $child_item = $cart_contents[ $child_key ];
@@ -1013,11 +1028,12 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                         // Apply percentage discount
                         $child_discount = isset( $child_item['woosb_discount'] ) ? (float) $child_item['woosb_discount'] : (float) ( $parent_item['woosb_discount'] ?? 0 );
-                        if ( ! empty( $child_discount ) ) {
-                            $_price *= ( 100 - $child_discount ) / 100;
+                        if ( ! empty( $child_discount ) && ! $round_discount ) {
+                            // Round on the displayed price (when enabled) so the final price is the same as the frontend
+                            $_price = $this->helper->get_discounted_price( $_product, $_price, $child_discount, $display_incl_tax );
+                        } else {
+                            $_price = $this->helper->round_price( $_price );
                         }
-
-                        $_price = $this->helper->round_price( $_price );
                         $_price = apply_filters( 'woosb_item_price_add_to_cart', $_price, $child_item );
                         $_price = apply_filters( 'woosb_item_price_before_set', $_price, $child_item );
 
@@ -1040,10 +1056,17 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                         $child_unit_prices[ $child_key ]         = $_price;
                         $child_tax_factors[ $child_key ]         = $tax_factor;
                         $child_display_line_totals[ $child_key ] = $_display_price * $child_qty_in_bundle;
+                    
+                    if ( $round_discount && ! empty( $child_discount ) ) {
+                        $pct_discount += $child_display_line_totals[ $child_key ] * (float) $child_discount / 100;
+                    }
                     }
 
                     // 2. Proportionally allocate fixed discount amount across children on display price using Largest Remainder Method
                     $discount_amount = apply_filters( 'woosb_cart_item_discount_amount', (float) ( $parent_item['woosb_discount_amount'] ?? 0 ), $parent_item );
+                    if ( $round_discount && $pct_discount > 0 ) {
+                        $discount_amount += WPCleverWoosb_Helper::round_discount( $pct_discount );
+                    }
                     $allocations     = [];
 
                     if ( $discount_amount > 0 && ! empty( $child_display_line_totals ) ) {
@@ -1554,6 +1577,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                 if ( ! $product->is_fixed_price() && ! apply_filters( 'woosb_ignore_get_price_html', false ) ) {
                     $discount_amount     = $product->get_discount_amount();
                     $discount_percentage = $product->get_discount_percentage();
+                    $round_discount      = $discount_percentage && WPCleverWoosb_Helper::is_round_discount(); // rounded discount amount of the whole bundle
 
                     if ( $product->has_optional() ) {
                         if ( $price_format === 'min_only' || $price_format === 'from_min' ) {
@@ -1567,7 +1591,8 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                     if ( $exclude_unpurchasable && ! $_unpurchasable ) {
                                         $items[ $k ]['price'] = 0;
                                     } else {
-                                        $items[ $k ]['price'] = $this->helper->get_price_to_display( $_product );
+                                        // unit price (displayed) with the percentage discount applied per item, same as the cart and JS
+                                        $items[ $k ]['price'] = $this->helper->get_discounted_price_to_display( $_product, $round_discount ? 0 : $discount_percentage );
                                     }
 
                                     if ( ! empty( $item['optional'] ) && ! $_unpurchasable ) {
@@ -1590,22 +1615,12 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                         $total_min += (float) $item['price'] * (float) $item['qty'];
                                         $total_qty += (float) $item['qty'];
                                     }
-
-                                    if ( ! $discount_amount && $discount_percentage ) {
-                                        $total_min *= ( 100 - (float) $discount_percentage ) / 100;
-                                        $total_min = $this->helper->round_price( $total_min );
-                                    }
                                 }
                             }
 
                             // min whole
                             $min_whole = (float) ( $product->get_meta( 'woosb_limit_whole_min' ) ?: 1 );
                             $min_price = (float) ( ! empty( $items_optional ) ? min( array_column( $items_optional, 'price' ) ) : 0 );
-
-                            if ( ! $discount_amount && $discount_percentage ) {
-                                $min_price *= ( 100 - (float) $discount_percentage ) / 100;
-                                $min_price = $this->helper->round_price( $min_price );
-                            }
 
                             if ( $total_qty > 0 ) {
                                 // has min each
@@ -1619,6 +1634,8 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                             // discount
                             if ( $discount_amount ) {
                                 $total_min -= (float) $discount_amount;
+                            } elseif ( $round_discount ) {
+                                $total_min -= WPCleverWoosb_Helper::round_discount( $total_min * $discount_percentage / 100 );
                             }
 
                             switch ( $price_format ) {
@@ -1640,17 +1657,18 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                         continue;
                                     }
 
-                                    $min_price += $this->helper->get_price_to_display( $_product, $item['qty'] );
-                                    $max_price += $this->helper->get_price_to_display( $_product, $item['qty'], 'max' );
+                                    // the percentage discount is applied per item (and rounded), same as the cart and JS
+                                    $min_price += $this->helper->get_discounted_price_to_display( $_product, $round_discount ? 0 : $discount_percentage, $item['qty'] );
+                                    $max_price += $this->helper->get_discounted_price_to_display( $_product, $round_discount ? 0 : $discount_percentage, $item['qty'], 'max' );
                                 }
                             }
 
                             if ( $discount_amount ) {
                                 $min_price -= (float) $discount_amount;
                                 $max_price -= (float) $discount_amount;
-                            } elseif ( $discount_percentage ) {
-                                $min_price *= (float) ( 100 - $discount_percentage ) / 100;
-                                $max_price *= (float) ( 100 - $discount_percentage ) / 100;
+                            } elseif ( $round_discount ) {
+                                $min_price -= WPCleverWoosb_Helper::round_discount( $min_price * $discount_percentage / 100 );
+                                $max_price -= WPCleverWoosb_Helper::round_discount( $max_price * $discount_percentage / 100 );
                             }
 
                             switch ( $price_format ) {
@@ -1668,6 +1686,7 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                     } else {
                         // auto calculated price
                         $price_regular = $price_sale = $price = 0;
+                        $round_discount = $discount_percentage && WPCleverWoosb_Helper::is_round_discount(); // rounded discount amount of the whole bundle
 
                         foreach ( $items as $item ) {
                             if ( $_product = wc_get_product( $item['id'] ) ) {
@@ -1677,10 +1696,9 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
 
                                 $_price = $this->helper->get_price( $_product );
 
-                                if ( $discount_percentage ) {
+                                if ( $discount_percentage && ! $round_discount ) {
                                     // when haven't discount_amount, apply the discount percentage
-                                    $_price *= ( 100 - (float) $discount_percentage ) / 100;
-                                    $_price = $this->helper->round_price( $_price );
+                                    $_price = $this->helper->get_discounted_price( $_product, $_price, $discount_percentage );
                                 }
 
                                 $_price        = apply_filters( 'woosb_item_price_add_to_cart', $_price, $_product );
@@ -1694,6 +1712,11 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                                         'price' => $_product->get_regular_price()
                                 ] );
                             }
+                        }
+
+                        if ( $round_discount ) {
+                            // the percentage discount is converted to a rounded discount amount
+                            $discount_amount = WPCleverWoosb_Helper::round_discount( $price_sale * $discount_percentage / 100 );
                         }
 
                         if ( $discount_amount ) {
@@ -2302,10 +2325,9 @@ if ( ! class_exists( 'WPCleverWoosb' ) && class_exists( 'WC_Product' ) ) {
                     $ori_price = (float) $this->helper->round_price( $product->get_price() );
                     $get_price = (float) $this->helper->get_price( $product );
 
-                    if ( ! $fixed_price && $discount_percentage ) {
+                    if ( ! $fixed_price && $discount_percentage && ! WPCleverWoosb_Helper::is_round_discount() ) {
                         $new_price     = true;
-                        $product_price = $get_price * ( 100 - (float) $discount_percentage ) / 100;
-                        $product_price = $this->helper->round_price( $product_price );
+                        $product_price = $this->helper->get_discounted_price( $product, $get_price, $discount_percentage );
                         $product_price = apply_filters( 'woosb_item_price_add_to_cart', $product_price, $item );
                     } else {
                         $new_price     = false;

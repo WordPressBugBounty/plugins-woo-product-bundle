@@ -367,6 +367,36 @@
         }
     }
 
+    // round the discount amount with the same decimals and mode as PHP (WPCleverWoosb_Helper::round_discount)
+    function woosb_round_discount(value) {
+        var decimals = parseInt(woosb_vars.discount_decimals);
+        var mode = woosb_vars.discount_round_mode || 'round';
+
+        if (mode === 'floor' || mode === 'ceil') {
+            var factor = Math.pow(10, decimals);
+            var scaled = parseFloat((value * factor).toFixed(6));
+
+            return (mode === 'floor' ? Math.floor(scaled) : Math.ceil(scaled)) / factor;
+        }
+
+        return woosb_round(value, decimals);
+    }
+
+    // round a price with the same decimals and mode as PHP (WPCleverWoosb_Helper::round_price)
+    function woosb_round_price(value) {
+        var decimals = woosb_vars.round_decimals !== undefined ? parseInt(woosb_vars.round_decimals) : parseInt(woosb_vars.price_decimals);
+        var mode = woosb_vars.round_mode || 'round';
+
+        if (mode === 'floor' || mode === 'ceil') {
+            var factor = Math.pow(10, decimals);
+            var scaled = parseFloat((value * factor).toFixed(6));
+
+            return (mode === 'floor' ? Math.floor(scaled) : Math.ceil(scaled)) / factor;
+        }
+
+        return woosb_round(value, decimals);
+    }
+
     function woosb_round(value, decimals) {
         return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
     }
@@ -413,6 +443,9 @@
             var discount_amount = $('#woosb_discount_amount').val() ? parseFloat($('#woosb_discount_amount').val()) : 0;
             var total_sale = -discount_amount;
             var discount_percentage = !$('#woosb_discount_amount').val() && $('#woosb_discount').val() ? parseFloat($('#woosb_discount').val()) : 0;
+            // the percentage discount is converted to a rounded discount amount of the whole bundle
+            var round_discount = discount_percentage > 0 && woosb_vars.discount_decimals !== undefined && woosb_vars.discount_decimals !== '' && parseInt(woosb_vars.discount_decimals) >= 0;
+            var item_discount_percentage = round_discount ? 0 : discount_percentage;
 
             $('#woosb_selected .woosb-li-product').each(function () {
                 var li_qty = parseFloat($(this).find('.qty input').val() ? $(this).find('.qty input').val() : 1);
@@ -430,8 +463,16 @@
                 total_raw += li_price_raw * li_qty;
 
                 if (woosb_vars.round_price) {
-                    total_sale += parseFloat((li_price * (100 - discount_percentage) / 100).toFixed(parseInt(woosb_vars.price_decimals))) * li_qty;
-                    total_sale_raw += parseFloat((li_price_raw * (100 - discount_percentage) / 100).toFixed(parseInt(woosb_vars.price_decimals))) * li_qty;
+                    var li_sale = woosb_round_price(li_price * (100 - item_discount_percentage) / 100);
+
+                    total_sale += li_sale * li_qty;
+
+                    if (item_discount_percentage > 0 && woosb_vars.round_display_price && li_price > 0) {
+                        // the displayed price is rounded, convert it back to the raw price (same as PHP)
+                        total_sale_raw += (li_sale * li_price_raw / li_price) * li_qty;
+                    } else {
+                        total_sale_raw += woosb_round_price(li_price_raw * (100 - item_discount_percentage) / 100) * li_qty;
+                    }
                 } else {
                     total_sale += li_price * li_qty;
                     total_sale_raw += li_price_raw * li_qty;
@@ -439,8 +480,14 @@
             });
 
             if (!woosb_vars.round_price) {
-                total_sale = parseFloat(total_sale * (100 - discount_percentage) / 100).toFixed(parseInt(woosb_vars.price_decimals));
-                total_sale_raw = parseFloat(total_sale_raw * (100 - discount_percentage) / 100);
+                total_sale = parseFloat(total_sale * (100 - item_discount_percentage) / 100).toFixed(parseInt(woosb_vars.price_decimals));
+                total_sale_raw = parseFloat(total_sale_raw * (100 - item_discount_percentage) / 100);
+            }
+
+            if (round_discount) {
+                // convert the percentage discount to a rounded discount amount
+                discount_amount = woosb_round_discount(total * discount_percentage / 100);
+                total_sale = total - discount_amount;
             }
 
             // the fixed discount amount is applied on the displayed price, then converted to the raw price basis

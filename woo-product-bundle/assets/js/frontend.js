@@ -143,6 +143,8 @@ function woosb_check_ready($wrap, context = null) {
     var exclude_unpurchasable = $products.attr('data-exclude-unpurchasable') === 'yes';
     var saved = '';
     var is_discount = discount > 0 && discount < 100;
+    // the percentage discount is converted to a rounded discount amount of the whole bundle
+    var is_round_discount = is_discount && !(discount_amount > 0) && woosb_is_round_discount();
     var is_discount_amount = discount_amount > 0;
     var qty_min = parseFloat($products.attr('data-min'));
     var qty_max = parseFloat($products.attr('data-max'));
@@ -171,7 +173,7 @@ function woosb_check_ready($wrap, context = null) {
 
                 total += _price * _qty;
 
-                if (!is_discount_amount && is_discount && woosb_vars.round_price) {
+                if (!is_discount_amount && is_discount && !is_round_discount && woosb_vars.round_price) {
                     _price = woosb_round(_price * (100 - discount) / 100);
                 }
 
@@ -182,6 +184,15 @@ function woosb_check_ready($wrap, context = null) {
         if (is_discount_amount && discount_amount < total) {
             total_sale = total - discount_amount;
             saved = woosb_format_price(discount_amount);
+        } else if (is_round_discount) {
+            var discount_total = woosb_round_discount(total * discount / 100);
+
+            if (discount_total > 0 && discount_total < total) {
+                total_sale = total - discount_total;
+                saved = woosb_format_price(discount_total);
+            } else {
+                total_sale = total;
+            }
         } else if (is_discount) {
             if (!woosb_vars.round_price) {
                 total_sale = woosb_round(total * (100 - discount) / 100);
@@ -404,7 +415,7 @@ function woosb_check_qty($qty) {
         var price_suffix = $product.attr('data-price-suffix');
         var ori_price = parseFloat($product.attr('data-price'));
         var qty = parseFloat($product.attr('data-qty'));
-        var discount = parseFloat($products.attr('data-discount'));
+        var discount = woosb_is_round_discount() ? 0 : parseFloat($products.attr('data-discount'));
 
         $product.find('.woosb-price-ori').hide();
 
@@ -426,7 +437,7 @@ function woosb_change_price($product, price, regular_price, price_html) {
     var $products = $product.closest('.woosb-products');
     var price_suffix = $product.attr('data-price-suffix');
     var qty = parseFloat($product.attr('data-qty'));
-    var discount = parseFloat($products.attr('data-discount'));
+    var discount = woosb_is_round_discount() ? 0 : parseFloat($products.attr('data-discount'));
     var new_price_html = '';
 
     // hide ori price
@@ -471,9 +482,33 @@ function woosb_change_price($product, price, regular_price, price_html) {
     jQuery(document).trigger('woosb_change_price', [$product, new_price_html]);
 }
 
-function woosb_round(value, decimals = -1) {
+// whether the percentage discount is converted to a rounded discount amount of the whole bundle (PHP: WPCleverWoosb_Helper::is_round_discount)
+function woosb_is_round_discount() {
+    return woosb_vars.discount_decimals !== undefined && woosb_vars.discount_decimals !== '' && parseInt(woosb_vars.discount_decimals) >= 0;
+}
+
+// round the discount amount with the same decimals and mode as PHP (WPCleverWoosb_Helper::round_discount)
+function woosb_round_discount(value) {
+    if (!woosb_is_round_discount()) {
+        return value;
+    }
+
+    return woosb_round(value, parseInt(woosb_vars.discount_decimals), woosb_vars.discount_round_mode || 'round');
+}
+
+function woosb_round(value, decimals = -1, mode = 'round') {
     if (decimals < 0) {
-        decimals = woosb_vars.price_decimals;
+        // price rounding: use the same decimals and mode as PHP (WPCleverWoosb_Helper::round_price)
+        decimals = woosb_vars.round_decimals !== undefined ? parseInt(woosb_vars.round_decimals) : parseInt(woosb_vars.price_decimals);
+        mode = woosb_vars.round_mode || 'round';
+    }
+
+    if (mode === 'floor' || mode === 'ceil') {
+        var factor = Math.pow(10, decimals);
+        // remove float noise (e.g. 90.00000000000001) before floor/ceil
+        var scaled = parseFloat((value * factor).toFixed(6));
+
+        return (mode === 'floor' ? Math.floor(scaled) : Math.ceil(scaled)) / factor;
     }
 
     return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);

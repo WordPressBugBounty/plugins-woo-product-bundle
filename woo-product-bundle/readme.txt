@@ -3,7 +3,7 @@ Contributors: wpclever
 Donate link: https://wpclever.net
 Tags: woocommerce, wpc, bundle, bundles, kits
 Tested up to: 7.1
-Stable tag: 8.7.9
+Stable tag: 8.8.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,6 +63,16 @@ Please try other plugins from us:
 5. Almost done! Click Save and see the result
 
 == Changelog ==
+
+= 8.8.0 =
+* Added: Filters woosb_round_display_price, woosb_round_mode, woosb_discount_decimals & woosb_discount_round_mode to round prices and percentage discounts the same way in PHP and JS
+* Fixed: Stored bundle price (_regular_price, _sale_price, _price) when prices are entered excluding tax but displayed including tax
+* Fixed: Fixed discount amount is now applied on the displayed price when calculating the stored bundle sale price
+* Fixed: Security issue - server-side validation of the bundled products could be bypassed (order_again parameter, custom request data)
+* Fixed: Bundles with all quantities set to 0 could be added to the cart
+* Fixed: Fractional quantities were accepted for optional bundled products
+* Fixed: Incorrect "From" price of bundles with optional or variable products when using a percentage discount
+* Fixed: Bundle removed from the cart when using WPML cart synchronization
 
 = 8.7.9 =
 * Fixed: Validation to prevent adding an empty bundle to the cart

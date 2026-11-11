@@ -58,10 +58,128 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 					$decimals = (int) apply_filters( 'woosb_price_decimals', wc_get_price_decimals() );
 				}
 
-				$rounded_price = round( $price, $decimals );
+				$rounded_price = self::round_by_mode( $price, $decimals );
 			}
 
 			return (float) apply_filters( 'woosb_rounded_price', $rounded_price, $price );
+		}
+
+		/**
+		 * Get the rounding mode for prices: round, floor or ceil. The same mode is used in JS (woosb_vars.round_mode).
+		 */
+		public static function get_round_mode(): string {
+			$mode = (string) apply_filters( 'woosb_round_mode', 'round' );
+
+			return in_array( $mode, [ 'round', 'floor', 'ceil' ], true ) ? $mode : 'round';
+		}
+
+		/**
+		 * Number of decimals used when rounding prices. The same value is used in JS (woosb_vars.round_decimals).
+		 */
+		public static function get_round_decimals(): int {
+			return (int) apply_filters( 'woosb_price_decimals', wc_get_price_decimals() );
+		}
+
+		/**
+		 * Whether percentage discounts are rounded on the displayed price (the same way as JS) instead of the raw price.
+		 */
+		public static function is_round_display_price(): bool {
+			return (bool) apply_filters( 'woosb_round_display_price', false );
+		}
+
+		/**
+		 * Number of decimals of the discount amount converted from a percentage discount, -1 when disabled.
+		 * Enable it via the filter woosb_discount_decimals (e.g. return 0 to get a whole-number discount).
+		 * The same value is used in JS (woosb_vars.discount_decimals).
+		 */
+		public static function get_discount_decimals(): int {
+			$decimals = apply_filters( 'woosb_discount_decimals', null );
+
+			return ( $decimals === null || $decimals === false || $decimals === '' ) ? - 1 : max( 0, (int) $decimals );
+		}
+
+		/**
+		 * Whether the percentage discount is converted to a rounded discount amount for the whole bundle.
+		 */
+		public static function is_round_discount(): bool {
+			return self::get_discount_decimals() >= 0;
+		}
+
+		/**
+		 * Rounding mode of the discount amount: round, floor or ceil. The same mode is used in JS (woosb_vars.discount_round_mode).
+		 */
+		public static function get_discount_round_mode(): string {
+			$mode = (string) apply_filters( 'woosb_discount_round_mode', 'round' );
+
+			return in_array( $mode, [ 'round', 'floor', 'ceil' ], true ) ? $mode : 'round';
+		}
+
+		/**
+		 * Round the discount amount of the whole bundle (converted from the percentage discount).
+		 * The prices of the bundled products are not rounded, only the discount is.
+		 */
+		public static function round_discount( $amount ) {
+			$decimals = self::get_discount_decimals();
+
+			if ( $decimals < 0 ) {
+				return (float) $amount;
+			}
+
+			return (float) self::round_by_mode( (float) $amount, $decimals, self::get_discount_round_mode() );
+		}
+
+		public static function round_by_mode( $price, $decimals, $mode = null ) {
+			$mode = $mode ?: self::get_round_mode();
+
+			if ( $mode === 'round' ) {
+				return round( $price, $decimals );
+			}
+
+			$factor = pow( 10, $decimals );
+			// round first to remove float noise (e.g. 90.00000000000001) before floor/ceil
+			$scaled = round( $price * $factor, 6 );
+
+			return ( $mode === 'floor' ? floor( $scaled ) : ceil( $scaled ) ) / $factor;
+		}
+
+		/**
+		 * Get the unit price of a bundled product after applying the percentage discount.
+		 *
+		 * By default the raw price is rounded. When the filter woosb_round_display_price is enabled, the displayed
+		 * price (including/excluding tax) is rounded instead, then converted back to the raw price, so the price
+		 * shown to the customer is always rounded the same way as in JS.
+		 *
+		 * @param WC_Product $product Bundled product.
+		 * @param float|string $price Raw unit price.
+		 * @param float|string $percentage Discount percentage.
+		 * @param bool|null $incl_tax Display including tax, null to use the shop setting.
+		 *
+		 * @return float
+		 */
+		public static function get_discounted_price( $product, $price, $percentage, $incl_tax = null ) {
+			$price      = (float) $price;
+			$percentage = (float) $percentage;
+			$discounted = $price * ( 100 - $percentage ) / 100;
+
+			if ( ! $percentage || $price <= 0 || ! self::is_round_display_price() || ! wc_tax_enabled() ) {
+				return self::round_price( $discounted );
+			}
+
+			$args = [ 'price' => $price, 'qty' => 1 ];
+
+			if ( $incl_tax === null ) {
+				$display = (float) wc_get_price_to_display( $product, $args );
+			} elseif ( $incl_tax ) {
+				$display = (float) wc_get_price_including_tax( $product, $args );
+			} else {
+				$display = (float) wc_get_price_excluding_tax( $product, $args );
+			}
+
+			if ( $display <= 0 ) {
+				return self::round_price( $discounted );
+			}
+
+			return self::round_price( $display * ( 100 - $percentage ) / 100 ) / ( $display / $price );
 		}
 
 		public static function get_price( $product, $min_or_max = 'min', $for_display = false ) {
@@ -88,6 +206,27 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 			}
 
 			return apply_filters( 'woosb_get_price', (float) $price, $product, $min_or_max );
+		}
+
+		/**
+		 * Get the displayed price (line total) of a bundled product after applying the percentage discount.
+		 * Used to calculate the "From"/min/max prices, so they are rounded exactly like the cart and JS.
+		 *
+		 * @param WC_Product $product Bundled product.
+		 * @param float|string $percentage Discount percentage (0 for none).
+		 * @param float|int|string $qty Quantity.
+		 * @param string $min_or_max Min or max price (variable products).
+		 *
+		 * @return float
+		 */
+		public static function get_discounted_price_to_display( $product, $percentage = 0, $qty = 1, $min_or_max = 'min' ) {
+			$price = self::get_price( $product, $min_or_max );
+
+			if ( (float) $percentage ) {
+				$price = self::get_discounted_price( $product, $price, $percentage );
+			}
+
+			return self::get_price_to_display( $product, [ 'price' => $price, 'qty' => $qty ] );
 		}
 
 		public static function get_price_to_display( $product, $qty = 1, $min_or_max = 'min' ) {
@@ -130,6 +269,8 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 			$discount_percentage = (float) $discount_percentage;
 			$raw_lines           = [];
 			$display_lines       = [];
+			// the percentage discount is converted to a rounded discount amount of the whole bundle
+			$round_discount = $discount_percentage > 0 && $discount_amount <= 0 && self::is_round_discount();
 
 			foreach ( $lines as $key => $line ) {
 				$_product = $line['product'] ?? null;
@@ -141,18 +282,26 @@ if ( ! class_exists( 'WPCleverWoosb_Helper' ) ) {
 				$_qty  = (float) ( $line['qty'] ?? 1 );
 				$_line = self::get_price( $_product ) * $_qty;
 
-				if ( $discount_percentage ) {
-					$_line = self::round_price( $_line * ( 100 - $discount_percentage ) / 100 );
+				if ( $discount_percentage && ! $round_discount ) {
+					if ( self::is_round_display_price() ) {
+						$_line = self::get_discounted_price( $_product, self::get_price( $_product ), $discount_percentage ) * $_qty;
+					} else {
+						$_line = self::round_price( $_line * ( 100 - $discount_percentage ) / 100 );
+					}
 				}
 
 				$raw_lines[ $key ] = $_line;
 
-				if ( $discount_amount > 0 ) {
+				if ( $discount_amount > 0 || $round_discount ) {
 					$display_lines[ $key ] = (float) wc_get_price_to_display( $_product, [
 						'price' => $_qty > 0 ? ( $_line / $_qty ) : 0,
 						'qty'   => $_qty,
 					] );
 				}
+			}
+
+			if ( $round_discount ) {
+				$discount_amount = self::round_discount( array_sum( $display_lines ) * $discount_percentage / 100 );
 			}
 
 			if ( $discount_amount <= 0 ) {

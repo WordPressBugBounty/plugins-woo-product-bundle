@@ -1958,6 +1958,8 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                             $child_display_line_totals = [];
                             $child_tax_factors         = [];
                             $display_incl_tax          = ! is_null( WC()->cart ) ? WC()->cart->display_prices_including_tax() : ( get_option( 'woocommerce_tax_display_cart' ) === 'incl' );
+                            $round_discount = WPCleverWoosb_Helper::is_round_discount(); // percentage discount => rounded discount amount of the whole bundle
+                            $pct_discount   = 0.0;
 
                             foreach ( $items as $key => $item ) {
                                 $_product = wc_get_product( $item['id'] );
@@ -1978,11 +1980,12 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
 
                                 // Apply percentage discount
                                 $child_discount = isset( $item['discount'] ) ? (float) $item['discount'] : $discount_percentage;
-                                if ( ! empty( $child_discount ) ) {
-                                    $_price *= ( 100 - $child_discount ) / 100;
+                                if ( ! empty( $child_discount ) && ! $round_discount ) {
+                                    // Round on the displayed price (when enabled) so the final price is the same as the frontend
+                                    $_price = $this->helper->get_discounted_price( $_product, $_price, $child_discount, $display_incl_tax );
+                                } else {
+                                    $_price = $this->helper->round_price( $_price );
                                 }
-
-                                $_price = $this->helper->round_price( $_price );
                                 
                                 // Mock cart item structure for filters
                                 $item['data']       = $_product;
@@ -2007,9 +2010,16 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                                 $child_unit_prices[ $key ]         = $_price;
                                 $child_tax_factors[ $key ]         = $tax_factor;
                                 $child_display_line_totals[ $key ] = $_display_price * (float) $item['qty'];
+                            
+                            if ( $round_discount && ! empty( $child_discount ) ) {
+                                $pct_discount += $child_display_line_totals[ $key ] * (float) $child_discount / 100;
+                            }
                             }
 
                             $discount_amount = apply_filters( 'woosb_cart_item_discount_amount', $discount_amount, $parent_item );
+                            if ( $round_discount && $pct_discount > 0 ) {
+                                $discount_amount += WPCleverWoosb_Helper::round_discount( $pct_discount );
+                            }
                             $allocations     = [];
 
                             if ( $discount_amount > 0 && ! empty( $child_display_line_totals ) ) {
@@ -2383,6 +2393,11 @@ if ( ! class_exists( 'WPCleverWoosb_Backend' ) ) {
                             'price_thousand_separator' => wc_get_price_thousand_separator(),
                             'price_decimal_separator'  => wc_get_price_decimal_separator(),
                             'round_price'              => apply_filters( 'woosb_round_price', ! apply_filters( 'woosb_ignore_round_price', false ) ),
+                            'round_mode'               => WPCleverWoosb_Helper::get_round_mode(),
+                            'round_decimals'           => WPCleverWoosb_Helper::get_round_decimals(),
+                            'discount_decimals'        => WPCleverWoosb_Helper::get_discount_decimals(),
+                            'discount_round_mode'      => WPCleverWoosb_Helper::get_discount_round_mode(),
+                            'round_display_price'      => WPCleverWoosb_Helper::is_round_display_price(),
                     ]
             );
         }
